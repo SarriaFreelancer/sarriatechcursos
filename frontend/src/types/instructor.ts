@@ -6,6 +6,7 @@ export interface LessonFormData {
   videoFile?: File | null;
   uploadProgress?: number;
   isFree?: boolean;
+  requiresEvidence?: boolean;
   resources?: Array<{
     id?: number;
     name: string;

@@ -20,6 +20,7 @@ export interface Lesson {
   resources: Resource[];
   isCompleted?: boolean;
   isFree?: boolean;
+  requiresEvidence?: boolean;
 }
 
 export interface Module {

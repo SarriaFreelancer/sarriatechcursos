@@ -75,6 +75,9 @@ export function GoogleAuthButton({ label, onSuccess, onError }: GoogleAuthButton
           return;
         }
 
+        const parentWidth = buttonRef.current?.parentElement?.clientWidth || 360;
+        const validWidth = Math.min(Math.max(parentWidth, 200), 400);
+
         buttonRef.current.innerHTML = '';
         buttonRef.current.style.width = '100%';
         window.google.accounts.id.initialize({
@@ -96,7 +99,7 @@ export function GoogleAuthButton({ label, onSuccess, onError }: GoogleAuthButton
           size: 'large',
           text: label.includes('Registrar') ? 'signup_with' : 'continue_with',
           shape: 'pill',
-          width: '100%',
+          width: validWidth,
           logo_alignment: 'left',
         });
 

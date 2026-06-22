@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const moduleId = Number(req.params.moduleId);
-    const { title, description, isFree } = req.body;
+    const { title, description, isFree, requiresEvidence } = req.body;
 
     if (!title) return res.status(400).json({ error: 'title is required' });
 
@@ -34,6 +34,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         order: count + 1,
         moduleId,
         isFree: isFree === true || isFree === 'true',
+        requiresEvidence: requiresEvidence === true || requiresEvidence === 'true',
       },
       include: { video: true, resources: true },
     });
@@ -49,7 +50,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const lessonId = Number(req.params.id);
-    const { title, description, order, isFree } = req.body;
+    const { title, description, order, isFree, requiresEvidence } = req.body;
 
     const userRole = await prisma.role.findUnique({ where: { id: req.user!.roleId } });
     const isAdmin = userRole?.name === 'ADMIN';
@@ -69,6 +70,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         ...(description !== undefined && { description }),
         ...(order !== undefined && { order: Number(order) }),
         ...(isFree !== undefined && { isFree: isFree === true || isFree === 'true' }),
+        ...(requiresEvidence !== undefined && { requiresEvidence: requiresEvidence === true || requiresEvidence === 'true' }),
       },
       include: { video: true, resources: true },
     });

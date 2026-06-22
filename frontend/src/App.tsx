@@ -10,8 +10,10 @@ import { Settings } from './pages/dashboard/Settings';
 import { InstructorDashboard } from './pages/instructor/InstructorDashboard';
 import { CourseCreator } from './pages/instructor/CourseCreator';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { EvidenceReview } from './pages/instructor/EvidenceReview';
 import { Profile } from './pages/profile/Profile';
 import { RequireRole } from './components/auth/RequireRole';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
@@ -34,9 +36,11 @@ function App() {
             <Route path="instructor" element={<RequireRole roleNames={['INSTRUCTOR', 'ADMIN']}><InstructorDashboard /></RequireRole>} />
             <Route path="instructor/create-course" element={<RequireRole roleNames={['INSTRUCTOR', 'ADMIN']}><CourseCreator /></RequireRole>} />
             <Route path="instructor/edit-course/:id" element={<RequireRole roleNames={['INSTRUCTOR', 'ADMIN']}><CourseCreator /></RequireRole>} />
+            <Route path="instructor/evidences" element={<RequireRole roleNames={['INSTRUCTOR', 'ADMIN']}><EvidenceReview /></RequireRole>} />
             <Route path="admin" element={<RequireRole roleNames={['ADMIN']}><AdminDashboard /></RequireRole>} />
           </Route>
         </Routes>
+        <Toaster position="bottom-right" />
       </div>
     </Router>
   );
