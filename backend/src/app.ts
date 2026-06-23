@@ -11,6 +11,7 @@ import moduleRoutes from './routes/modules.routes';
 import lessonRoutes from './routes/lessons.routes';
 import uploadRoutes from './routes/upload.routes';
 import reviewRoutes from './routes/reviews.routes';
+import evidenceRoutes from './routes/evidences.routes';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/lessons', lessonRoutes);
 app.use('/api/lessons/:lessonId/comments', commentRoutes);
 app.use('/api/courses/:courseId/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/evidences', evidenceRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'OK', message: 'SarriaTech API is running' });

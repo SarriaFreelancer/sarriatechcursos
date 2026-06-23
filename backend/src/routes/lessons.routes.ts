@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const moduleId = Number(req.params.moduleId);
-    const { title, description, isFree } = req.body;
+    const { title, description, isFree, requiresEvidence } = req.body;
 
     if (!title) return res.status(400).json({ error: 'title is required' });
 
@@ -34,6 +34,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         order: count + 1,
         moduleId,
         isFree: isFree === true || isFree === 'true',
+        requiresEvidence: requiresEvidence === true || requiresEvidence === 'true',
       },
       include: { video: true, resources: true },
     });
@@ -49,7 +50,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const lessonId = Number(req.params.id);
-    const { title, description, order, isFree } = req.body;
+    const { title, description, order, isFree, requiresEvidence } = req.body;
 
     const userRole = await prisma.role.findUnique({ where: { id: req.user!.roleId } });
     const isAdmin = userRole?.name === 'ADMIN';
@@ -69,6 +70,7 @@ router.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
         ...(description !== undefined && { description }),
         ...(order !== undefined && { order: Number(order) }),
         ...(isFree !== undefined && { isFree: isFree === true || isFree === 'true' }),
+        ...(requiresEvidence !== undefined && { requiresEvidence: requiresEvidence === true || requiresEvidence === 'true' }),
       },
       include: { video: true, resources: true },
     });
@@ -109,6 +111,85 @@ router.post('/:id/video', authMiddleware, async (req: AuthRequest, res: Response
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to attach video' });
+  }
+});
+
+// POST /api/lessons/:id/progress - Save lesson progress for the authenticated student
+router.post('/:id/progress', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const lessonId = Number(req.params.id);
+    const { percentage = 100, isCompleted = false } = req.body;
+    const studentId = req.user!.userId;
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { module: { include: { course: true } } },
+    });
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { courseId: lesson.module.courseId, studentId },
+    });
+    if (!enrollment) {
+      return res.status(403).json({ error: 'No estás inscrito en este curso' });
+    }
+
+    const progressPayload = {
+      percentage: Number(percentage),
+      isCompleted: Boolean(isCompleted || Number(percentage) >= 100),
+    };
+
+    const existingProgress = await prisma.progress.findFirst({
+      where: { studentId, lessonId },
+    });
+
+    const progress = existingProgress
+      ? await prisma.progress.update({
+          where: { id: existingProgress.id },
+          data: progressPayload,
+        })
+      : await prisma.progress.create({
+          data: {
+            studentId,
+            lessonId,
+            ...progressPayload,
+          },
+        });
+
+    const allLessons = await prisma.lesson.findMany({
+      where: { module: { courseId: lesson.module.courseId } },
+      select: { id: true },
+    });
+    const lessonIds = allLessons.map((item) => item.id);
+    const completedCount = await prisma.progress.count({
+      where: {
+        studentId,
+        lessonId: { in: lessonIds },
+        isCompleted: true,
+      },
+    });
+
+    const totalLessons = lessonIds.length;
+    const courseProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+    await prisma.enrollment.updateMany({
+      where: { courseId: lesson.module.courseId, studentId },
+      data: {
+        status: courseProgress >= 100 ? 'COMPLETED' : 'ACTIVE',
+      },
+    });
+
+    res.json({
+      progress,
+      courseProgress,
+      completedCount,
+      totalLessons,
+    });
+  } catch (error) {
+    console.error('Error saving lesson progress:', error);
+    res.status(500).json({ error: 'Failed to save progress' });
   }
 });
 

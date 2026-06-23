@@ -86,6 +86,7 @@ model Lesson {
   moduleId    Int
   module      Module   @relation(fields: [moduleId], references: [id])
   isFree      Boolean  @default(false)
+  requiresEvidence Boolean @default(false)
 
   video       Video?
   resources   Resource[]

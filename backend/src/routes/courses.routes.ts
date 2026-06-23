@@ -270,6 +270,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
             order: lesson.order,
             moduleId: lesson.moduleId,
             isFree: lesson.isFree,
+            requiresEvidence: lesson.requiresEvidence,
             video: null, // Lock it
             resources: [], // Lock resources
             locked: true,

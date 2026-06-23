@@ -50,7 +50,7 @@ export function ModuleEditor({ moduleIndex, onRemove, isOnly }: ModuleEditorProp
         <div className="p-3 sm:p-4 space-y-3">
           {module.lessons.map((lesson, lessonIndex) => (
             <div
-              key={lessonIndex}
+              key={lesson.clientId || lesson.id || lessonIndex}
               className="bg-background border border-border rounded-lg p-3 sm:p-4 space-y-3"
             >
               <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export function ModuleEditor({ moduleIndex, onRemove, isOnly }: ModuleEditorProp
                 rows={2}
                 className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               />
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6 pt-1">
                 <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-muted-foreground hover:text-foreground">
                   <input
                     type="checkbox"
@@ -89,7 +89,16 @@ export function ModuleEditor({ moduleIndex, onRemove, isOnly }: ModuleEditorProp
                     onChange={(e) => updateLesson(moduleIndex, lessonIndex, { isFree: e.target.checked })}
                     className="accent-primary rounded border-border w-4 h-4 focus:ring-primary/40"
                   />
-                  Disponible como vista previa gratuita
+                  Vista previa gratuita
+                </label>
+                <label className="flex items-center gap-2.5 text-xs font-semibold cursor-pointer text-muted-foreground hover:text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={lesson.requiresEvidence || false}
+                    onChange={(e) => updateLesson(moduleIndex, lessonIndex, { requiresEvidence: e.target.checked })}
+                    className="accent-primary rounded border-border w-4 h-4 focus:ring-primary/40"
+                  />
+                  Requiere evidencia
                 </label>
               </div>
             </div>

@@ -56,12 +56,20 @@ export function InstructorDashboard() {
             {loading ? 'Cargando tus cursos...' : 'Todo lo que ves aquí viene de tus cursos reales.'}
           </p>
         </div>
-        <Link
-          to="/instructor/create-course"
-          className="bg-primary text-primary-foreground font-medium px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors text-sm sm:text-base w-full sm:w-auto justify-center sm:justify-start"
-        >
-          <PlusCircle className="w-5 h-5" /> Crear Nuevo Curso
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+          <Link
+            to="/instructor/evidences"
+            className="bg-secondary text-foreground font-medium px-4 py-2.5 rounded-lg flex items-center gap-2 border border-border hover:bg-secondary/80 transition-colors text-sm sm:text-base justify-center sm:justify-start"
+          >
+            <BookOpen className="w-5 h-5" /> Revisar Evidencias
+          </Link>
+          <Link
+            to="/instructor/create-course"
+            className="bg-primary text-primary-foreground font-medium px-4 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors text-sm sm:text-base justify-center sm:justify-start"
+          >
+            <PlusCircle className="w-5 h-5" /> Crear Nuevo Curso
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">

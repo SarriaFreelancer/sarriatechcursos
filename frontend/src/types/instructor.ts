@@ -1,4 +1,5 @@
 export interface LessonFormData {
+  clientId?: string;
   id?: number;
   title: string;
   description: string;
@@ -6,6 +7,7 @@ export interface LessonFormData {
   videoFile?: File | null;
   uploadProgress?: number;
   isFree?: boolean;
+  requiresEvidence?: boolean;
   resources?: Array<{
     id?: number;
     name: string;
@@ -15,6 +17,7 @@ export interface LessonFormData {
 }
 
 export interface ModuleFormData {
+  clientId?: string;
   id?: number;
   title: string;
   lessons: LessonFormData[];

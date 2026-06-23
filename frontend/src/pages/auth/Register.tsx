@@ -285,11 +285,13 @@ export function Register() {
             </motion.div>
           )}
 
-          <GoogleAuthButton
-            label="Registrarse con Google"
-            onSuccess={handleGoogleSuccess}
-            onError={setErrorMsg}
-          />
+          <div className="w-full flex justify-center">
+            <GoogleAuthButton
+              label="Registrarse con Google"
+              onSuccess={handleGoogleSuccess}
+              onError={setErrorMsg}
+            />
+          </div>
 
           {/* Formulario */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
