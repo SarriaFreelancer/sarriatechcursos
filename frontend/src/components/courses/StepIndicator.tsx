@@ -20,7 +20,7 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
           const isCompleted = index < currentStep;
           const isActive = index === currentStep;
           return (
-            <div key={index} className="flex items-center">
+            <div key={step.label} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all duration-300",
@@ -54,7 +54,7 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
           const isCompleted = index < currentStep;
           const isActive = index === currentStep;
           return (
-            <div key={index} className="flex flex-col items-center flex-1">
+            <div key={step.label} className="flex flex-col items-center flex-1">
               <div className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all duration-300",
                 isCompleted ? "bg-primary border-primary text-primary-foreground" :
@@ -64,9 +64,6 @@ export function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
                 {isCompleted ? <Check className="w-4 h-4" /> : index + 1}
               </div>
               <span className={cn("text-xs mt-1 font-medium", isActive ? "text-primary" : "text-muted-foreground")}>{step.label}</span>
-              {index < steps.length - 1 && (
-                <div className={cn("absolute hidden")} />
-              )}
             </div>
           );
         })}

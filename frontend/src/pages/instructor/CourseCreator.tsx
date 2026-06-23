@@ -29,7 +29,6 @@ export function CourseCreator() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   const {
-    courseId,
     setCourseId,
     modules,
     addModule,
@@ -37,8 +36,6 @@ export function CourseCreator() {
     updateLesson,
     reset,
     loadFromCourse,
-    deletedModuleIds,
-    deletedLessonIds,
   } = useInstructorStore();
 
   const { register, handleSubmit, setValue, reset: resetForm, formState: { errors } } = useForm<CourseFormData>({
@@ -398,11 +395,18 @@ export function CourseCreator() {
                 disabled={saving}
                 className="bg-primary text-primary-foreground font-medium px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 text-sm"
               >
-                {saving ? (
-                  <span className="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                ) : (
-                  <ArrowRight className="w-4 h-4" />
-                )}
+                <span
+                  className={`inline-flex w-4 h-4 shrink-0 items-center justify-center ${
+                    saving ? 'animate-spin' : ''
+                  }`}
+                  aria-hidden="true"
+                >
+                  {saving ? (
+                    <span className="block w-4 h-4 rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
+                </span>
                 {saving ? 'Guardando...' : 'Continuar'}
               </button>
             </div>
@@ -422,7 +426,7 @@ export function CourseCreator() {
             <div className="space-y-3 sm:space-y-4">
               {modules.map((_, moduleIndex) => (
                 <ModuleEditor
-                  key={moduleIndex}
+                  key={modules[moduleIndex].clientId || modules[moduleIndex].id || moduleIndex}
                   moduleIndex={moduleIndex}
                   isOnly={modules.length === 1}
                   onRemove={() => removeModule(moduleIndex)}
@@ -450,11 +454,18 @@ export function CourseCreator() {
               disabled={saving}
               className="bg-primary text-primary-foreground font-medium px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-60 text-sm"
             >
-              {saving ? (
-                <span className="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <ArrowRight className="w-4 h-4" />
-              )}
+              <span
+                className={`inline-flex w-4 h-4 shrink-0 items-center justify-center ${
+                  saving ? 'animate-spin' : ''
+                }`}
+                aria-hidden="true"
+              >
+                {saving ? (
+                  <span className="block w-4 h-4 rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+              </span>
               {saving ? 'Guardando...' : 'Guardar y Continuar'}
             </button>
           </div>
@@ -474,14 +485,14 @@ export function CourseCreator() {
 
             <div className="space-y-6">
               {modules.map((module, mi) => (
-                <div key={mi} className="space-y-3">
+                <div key={module.clientId || module.id || mi} className="space-y-3">
                   <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide border-b border-border pb-2 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-primary" />
                     Módulo {mi + 1}: {module.title}
                   </h3>
                   <div className="space-y-6 pl-0 sm:pl-4">
                     {module.lessons.map((lesson, li) => (
-                      <div key={li} className="bg-background border border-border rounded-xl p-4 sm:p-5">
+                      <div key={lesson.clientId || lesson.id || li} className="bg-background border border-border rounded-xl p-4 sm:p-5">
                         <VideoUploader
                           lessonTitle={`${mi + 1}.${li + 1} ${lesson.title || 'Sin título'}`}
                           currentUrl={lesson.videoUrl}
@@ -520,11 +531,18 @@ export function CourseCreator() {
                 disabled={publishing}
                 className="bg-green-600 text-white font-semibold px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors disabled:opacity-60 text-sm shadow-lg shadow-green-500/20"
               >
-                {publishing ? (
-                  <span className="inline-block animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                ) : (
-                  <Rocket className="w-4 h-4" />
-                )}
+                <span
+                  className={`inline-flex w-4 h-4 shrink-0 items-center justify-center ${
+                    publishing ? 'animate-spin' : ''
+                  }`}
+                  aria-hidden="true"
+                >
+                  {publishing ? (
+                    <span className="block w-4 h-4 rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Rocket className="w-4 h-4" />
+                  )}
+                </span>
                 {publishing ? 'Publicando...' : isEditMode ? 'Guardar y Publicar' : 'Publicar Curso'}
               </button>
             </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type DragEvent } from 'react';
+import { useCallback, useEffect, useId, useState, type ChangeEvent, type DragEvent } from 'react';
 import { UploadCloud, Film, CheckCircle2, XCircle, Link2 } from 'lucide-react';
 import api from '../../lib/axios';
 import { cn } from '../../lib/utils';
@@ -10,6 +10,7 @@ interface VideoUploaderProps {
 }
 
 export function VideoUploader({ lessonTitle, currentUrl, onUploaded }: VideoUploaderProps) {
+  const inputId = useId();
   const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -192,10 +193,10 @@ export function VideoUploader({ lessonTitle, currentUrl, onUploaded }: VideoUplo
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              onClick={() => !uploading && document.getElementById(`video-input-${lessonTitle.replace(/\s+/g, '_')}`)?.click()}
+              onClick={() => !uploading && document.getElementById(inputId)?.click()}
             >
               <input
-                id={`video-input-${lessonTitle.replace(/\s+/g, '_')}`}
+                id={inputId}
                 type="file"
                 accept="video/mp4,video/webm,video/mov,video/avi,video/mkv"
                 className="hidden"

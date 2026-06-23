@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ModuleFormData, LessonFormData } from '../types/instructor';
 
+const createClientId = () =>
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
 interface CourseApiData {
   id: number;
   title: string;
@@ -48,6 +51,7 @@ interface InstructorState {
 }
 
 const defaultLesson = (): LessonFormData => ({
+  clientId: createClientId(),
   title: '',
   description: '',
   videoUrl: undefined,
@@ -59,6 +63,7 @@ const defaultLesson = (): LessonFormData => ({
 });
 
 const defaultModule = (): ModuleFormData => ({
+  clientId: createClientId(),
   title: '',
   lessons: [defaultLesson()],
 });
@@ -78,9 +83,11 @@ export const useInstructorStore = create<InstructorState>()(
         const modules: ModuleFormData[] =
           course.modules && course.modules.length > 0
             ? course.modules.map((mod) => ({
+                clientId: createClientId(),
                 id: mod.id,
                 title: mod.title,
                 lessons: mod.lessons.map((lesson) => ({
+                  clientId: createClientId(),
                   id: lesson.id,
                   title: lesson.title,
                   description: lesson.description || '',

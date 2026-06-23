@@ -1,5 +1,5 @@
-import { useState, useCallback, ChangeEvent } from 'react';
-import { Paperclip, Plus, Trash2, File as FileIcon, XCircle, CheckCircle2 } from 'lucide-react';
+import { useState, useCallback, useId, type ChangeEvent } from 'react';
+import { Paperclip, Plus, Trash2, File as FileIcon, XCircle } from 'lucide-react';
 import api from '../../lib/axios';
 
 interface Resource {
@@ -17,6 +17,7 @@ interface ResourceUploaderProps {
 }
 
 export function ResourceUploader({ lessonId, resources, onAddResource, onRemoveResource }: ResourceUploaderProps) {
+  const inputId = useId();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
@@ -133,7 +134,7 @@ export function ResourceUploader({ lessonId, resources, onAddResource, onRemoveR
 
       <div>
         <input
-          id={`resource-upload-${lessonId}`}
+          id={inputId}
           type="file"
           className="hidden"
           onChange={handleInputChange}
@@ -152,7 +153,7 @@ export function ResourceUploader({ lessonId, resources, onAddResource, onRemoveR
           </div>
         ) : (
           <button
-            onClick={() => document.getElementById(`resource-upload-${lessonId}`)?.click()}
+            onClick={() => document.getElementById(inputId)?.click()}
             className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />

@@ -50,7 +50,7 @@ export function ModuleEditor({ moduleIndex, onRemove, isOnly }: ModuleEditorProp
         <div className="p-3 sm:p-4 space-y-3">
           {module.lessons.map((lesson, lessonIndex) => (
             <div
-              key={lessonIndex}
+              key={lesson.clientId || lesson.id || lessonIndex}
               className="bg-background border border-border rounded-lg p-3 sm:p-4 space-y-3"
             >
               <div className="flex items-center gap-2">
