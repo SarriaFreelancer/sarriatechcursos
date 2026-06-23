@@ -76,7 +76,10 @@ export function GoogleAuthButton({ label, onSuccess, onError }: GoogleAuthButton
         }
 
         const parentWidth = buttonRef.current?.parentElement?.clientWidth || 360;
-        const validWidth = Math.min(Math.max(parentWidth, 200), 400);
+        const isCompactViewport = window.matchMedia('(max-width: 640px)').matches;
+        const validWidth = isCompactViewport
+          ? Math.min(Math.max(parentWidth, 220), 320)
+          : Math.min(Math.max(parentWidth, 280), 440);
 
         buttonRef.current.innerHTML = '';
         buttonRef.current.style.width = '100%';
@@ -96,7 +99,7 @@ export function GoogleAuthButton({ label, onSuccess, onError }: GoogleAuthButton
 
         window.google.accounts.id.renderButton(buttonRef.current, {
           theme: 'filled_blue',
-          size: 'large',
+          size: isCompactViewport ? 'medium' : 'large',
           text: label.includes('Registrar') ? 'signup_with' : 'continue_with',
           shape: 'pill',
           width: validWidth,
@@ -124,8 +127,8 @@ export function GoogleAuthButton({ label, onSuccess, onError }: GoogleAuthButton
       <p className="text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
         O continúa con Google
       </p>
-      <div className="transition-all">
-        <div ref={buttonRef} className="w-full [&>div]:!w-full" />
+      <div className="transition-all flex justify-center w-full">
+        <div ref={buttonRef} className="w-full max-w-[320px] sm:max-w-[440px] [&>div]:!mx-auto [&>div]:!block" />
         {status !== 'ready' && (
           <p
             className={`px-1 pt-1 text-center text-xs ${

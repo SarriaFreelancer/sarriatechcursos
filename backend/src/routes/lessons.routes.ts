@@ -114,6 +114,85 @@ router.post('/:id/video', authMiddleware, async (req: AuthRequest, res: Response
   }
 });
 
+// POST /api/lessons/:id/progress - Save lesson progress for the authenticated student
+router.post('/:id/progress', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const lessonId = Number(req.params.id);
+    const { percentage = 100, isCompleted = false } = req.body;
+    const studentId = req.user!.userId;
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      include: { module: { include: { course: true } } },
+    });
+    if (!lesson) {
+      return res.status(404).json({ error: 'Lesson not found' });
+    }
+
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { courseId: lesson.module.courseId, studentId },
+    });
+    if (!enrollment) {
+      return res.status(403).json({ error: 'No estás inscrito en este curso' });
+    }
+
+    const progressPayload = {
+      percentage: Number(percentage),
+      isCompleted: Boolean(isCompleted || Number(percentage) >= 100),
+    };
+
+    const existingProgress = await prisma.progress.findFirst({
+      where: { studentId, lessonId },
+    });
+
+    const progress = existingProgress
+      ? await prisma.progress.update({
+          where: { id: existingProgress.id },
+          data: progressPayload,
+        })
+      : await prisma.progress.create({
+          data: {
+            studentId,
+            lessonId,
+            ...progressPayload,
+          },
+        });
+
+    const allLessons = await prisma.lesson.findMany({
+      where: { module: { courseId: lesson.module.courseId } },
+      select: { id: true },
+    });
+    const lessonIds = allLessons.map((item) => item.id);
+    const completedCount = await prisma.progress.count({
+      where: {
+        studentId,
+        lessonId: { in: lessonIds },
+        isCompleted: true,
+      },
+    });
+
+    const totalLessons = lessonIds.length;
+    const courseProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+    await prisma.enrollment.updateMany({
+      where: { courseId: lesson.module.courseId, studentId },
+      data: {
+        status: courseProgress >= 100 ? 'COMPLETED' : 'ACTIVE',
+      },
+    });
+
+    res.json({
+      progress,
+      courseProgress,
+      completedCount,
+      totalLessons,
+    });
+  } catch (error) {
+    console.error('Error saving lesson progress:', error);
+    res.status(500).json({ error: 'Failed to save progress' });
+  }
+});
+
 // DELETE /api/lessons/:id - Delete a lesson
 router.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {

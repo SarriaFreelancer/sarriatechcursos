@@ -9,6 +9,16 @@ export interface Video {
   id: number;
   url: string;
   duration?: number;
+  qualities?: Array<{
+    label: string;
+    url: string;
+  }>;
+  captions?: Array<{
+    label: string;
+    src: string;
+    lang?: string;
+    default?: boolean;
+  }>;
 }
 
 export interface Lesson {

@@ -8,6 +8,7 @@ interface CourseState {
   setCourse: (course: Course | null) => void;
   setActiveLesson: (id: number) => void;
   markLessonComplete: (id: number) => void;
+  setCompletedLessons: (ids: number[]) => void;
 }
 
 export const useCourseStore = create<CourseState>((set) => ({
@@ -24,4 +25,5 @@ export const useCourseStore = create<CourseState>((set) => ({
       ? state.completedLessons 
       : [...state.completedLessons, id]
   })),
+  setCompletedLessons: (ids) => set({ completedLessons: Array.from(new Set(ids)) }),
 }));
