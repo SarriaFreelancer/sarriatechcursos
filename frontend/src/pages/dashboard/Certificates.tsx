@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ChevronDown, GraduationCap, ShieldCheck, Image as ImageIcon, FileText } from 'lucide-react';
+import { ChevronDown, GraduationCap, ShieldCheck, Image as ImageIcon, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { CertificateTemplate, type CertificateData } from '../../components/certificates/CertificateTemplate';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -13,6 +13,7 @@ type ProfileCourse = {
   instructorName: string;
   category: string;
   progress: number;
+  courseProgress?: number;
   enrolledAt: string;
 };
 
@@ -32,7 +33,7 @@ function toCertificateData(course: ProfileCourse, studentName: string): Certific
     course_description: `Curso de ${course.category} impartido por ${course.instructorName}.`,
     completion_date: date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
     course_duration: '30 horas en vivo',
-    course_level: course.progress >= 100 ? 'Aprobado' : 'En progreso',
+    course_level: (course.courseProgress ?? course.progress) >= 100 ? 'Aprobado' : 'En progreso',
     certificate_id: id,
     verification_url: `https://sarriatech.com/certificados/${id}`,
     instructor_name: course.instructorName,
@@ -232,32 +233,36 @@ export function Certificates() {
   const [errorMsg, setErrorMsg] = useState('');
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadProfile = () => {
+    setLoading(true);
     api
       .get('/auth/profile')
       .then((res) => {
-        if (cancelled) return;
         setProfile(res.data);
         setSelectedCourseId(res.data.enrollments?.[0]?.courseId ?? null);
       })
       .catch((err) => {
-        if (!cancelled) setErrorMsg(err.response?.data?.error || 'No se pudo cargar tus certificados.');
+        setErrorMsg(err.response?.data?.error || 'No se pudo cargar tus certificados.');
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
+  };
 
-    return () => {
-      cancelled = true;
-    };
+  useEffect(() => {
+    loadProfile();
+    const onProgressUpdate = () => loadProfile();
+    window.addEventListener('course-progress-updated', onProgressUpdate as EventListener);
+    return () => window.removeEventListener('course-progress-updated', onProgressUpdate as EventListener);
   }, []);
 
   const selectedCourse = useMemo(() => {
     if (!profile) return null;
     return profile.enrollments.find((enrollment) => enrollment.courseId === selectedCourseId) || profile.enrollments[0] || null;
   }, [profile, selectedCourseId]);
+
+  const selectedCourseProgress = selectedCourse ? (selectedCourse.courseProgress ?? selectedCourse.progress) : 0;
+  const courseCompleted = selectedCourseProgress >= 100;
 
   const certificateData = useMemo(() => {
     if (!selectedCourse || !profile) return null;
@@ -279,7 +284,8 @@ export function Certificates() {
     };
 
   const handleDownloadPdf = () => {
-    const html = buildPrintableHtml(previewData, !selectedCourse || selectedCourse.progress < 100);
+    if (!courseCompleted) return;
+    const html = buildPrintableHtml(previewData, !selectedCourse || !courseCompleted);
     const win = window.open('', '_blank', 'noopener,noreferrer,width=1600,height=1100');
     if (!win) return;
 
@@ -293,7 +299,7 @@ export function Certificates() {
   };
 
   const handleDownloadPng = async () => {
-    if (!certificateRef.current) return;
+    if (!certificateRef.current || !courseCompleted) return;
 
     const canvas = await html2canvas(certificateRef.current, {
       backgroundColor: '#050505',
@@ -356,17 +362,19 @@ export function Certificates() {
           </span>
           <button
             onClick={handleDownloadPdf}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            disabled={!courseCompleted}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-primary"
           >
             <FileText className="h-4 w-4" />
-            Descargar PDF
+            {courseCompleted ? 'Descargar PDF' : 'Completa el curso'}
           </button>
           <button
             onClick={handleDownloadPng}
-            className="inline-flex items-center gap-2 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-2.5 text-sm font-semibold text-lime-500 transition-colors hover:bg-lime-400/15"
+            disabled={!courseCompleted}
+            className="inline-flex items-center gap-2 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-2.5 text-sm font-semibold text-lime-500 transition-colors hover:bg-lime-400/15 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ImageIcon className="h-4 w-4" />
-            Descargar PNG
+            {courseCompleted ? 'Descargar PNG' : 'Bloqueado'}
           </button>
         </div>
       </motion.div>
@@ -412,19 +420,18 @@ export function Certificates() {
           <div className="overflow-hidden rounded-[24px] bg-[#050505] p-2 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:rounded-[32px] sm:p-4">
             <div className="mx-auto flex w-full justify-center">
               <div ref={certificateRef} className="w-full max-w-[1400px]">
-                <CertificateTemplate data={previewData} previewMode={!selectedCourse || selectedCourse.progress < 100} />
+                <CertificateTemplate data={previewData} previewMode={!courseCompleted} />
               </div>
             </div>
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground">Descarga</p>
+            <p className="font-semibold text-foreground">Estado del certificado</p>
             <p className="mt-1">
-              La exportación usa una ventana dedicada para evitar el PDF en blanco y mantener la proporción horizontal correcta.
+              {courseCompleted
+                ? 'El curso está completo. Ya puedes generar y descargar el certificado.'
+                : 'El certificado permanece bloqueado hasta completar el 100% del curso.'}
             </p>
-            <div className="mt-4 text-xs text-muted-foreground">
-              Si quieres, luego conectamos esta vista a un endpoint para generar el PDF en backend de forma definitiva.
-            </div>
           </div>
         </div>
       </div>

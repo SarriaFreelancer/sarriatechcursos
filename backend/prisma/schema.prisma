@@ -119,6 +119,7 @@ model Enrollment {
   courseId  Int
   course    Course   @relation(fields: [courseId], references: [id])
   status    String   // ACTIVE, COMPLETED, CANCELLED
+  courseProgress Float @default(0)
   createdAt DateTime @default(now())
 }
 

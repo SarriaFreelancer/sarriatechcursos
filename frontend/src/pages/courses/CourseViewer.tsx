@@ -23,6 +23,8 @@ type BackendCourse = {
   totalReviews: number;
   reviews: any[];
   isEnrolled: boolean;
+  courseProgress?: number;
+  enrollmentStatus?: string | null;
   instructor: {
     id: number;
     name: string;
@@ -56,7 +58,7 @@ type BackendCourse = {
 export function CourseViewer() {
   const { id } = useParams();
   const { user } = useAuthStore();
-  const { course, setCourse, activeLessonId } = useCourseStore();
+  const { course, setCourse, activeLessonId, completedLessons, courseProgress } = useCourseStore();
   const [showSidebar, setShowSidebar] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -118,6 +120,7 @@ export function CourseViewer() {
         const backendCourse = response.data as BackendCourse;
         setIsEnrolled(backendCourse.isEnrolled);
         setFullCourseData(backendCourse);
+        useCourseStore.getState().setCourseProgress(backendCourse.courseProgress ?? 0);
 
         const normalizedCourse: Course = {
           id: backendCourse.id,
@@ -157,6 +160,10 @@ export function CourseViewer() {
         };
 
         setCourse(normalizedCourse);
+        if ((backendCourse.courseProgress ?? 0) >= 100) {
+          const completedLessonIds = normalizedCourse.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id));
+          useCourseStore.getState().setCompletedLessons(completedLessonIds);
+        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -216,6 +223,14 @@ export function CourseViewer() {
   }
 
   let activeLesson = null;
+  const totalLessons = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
+  const completedLessonsCount = course.modules.reduce(
+    (sum, module) => sum + module.lessons.filter((lesson) => completedLessons.includes(lesson.id)).length,
+    0
+  );
+  const derivedCourseProgress = totalLessons > 0 ? Math.round((completedLessonsCount / totalLessons) * 100) : 0;
+  const displayedCourseProgress = Math.max(courseProgress, derivedCourseProgress);
+
   for (const module of course.modules) {
     const lesson = module.lessons.find((currentLesson) => currentLesson.id === activeLessonId);
     if (lesson) {
@@ -254,6 +269,20 @@ export function CourseViewer() {
                     <p className="text-muted-foreground text-xs sm:text-sm flex items-center gap-2">
                       Profesor: <span className="font-medium text-primary">{course.instructorName}</span>
                     </p>
+                    <div className="mt-3 rounded-xl border border-border bg-card/70 p-3">
+                      <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-2">
+                        <span>Avance total del curso</span>
+                        <span className={displayedCourseProgress === 100 ? 'text-emerald-500' : 'text-primary'}>
+                          {displayedCourseProgress}%
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${displayedCourseProgress === 100 ? 'bg-emerald-500' : 'bg-primary'}`}
+                          style={{ width: `${displayedCourseProgress}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Content Protected Video Player Container */}

@@ -162,6 +162,8 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
                       include: {
                         progress: {
                           where: { studentId: userId },
+                          orderBy: { updatedAt: 'desc' },
+                          take: 1,
                         },
                       },
                     },
@@ -187,7 +189,8 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
     let totalProgressSum = 0;
     let completedLessonsCount = 0;
 
-    const processedEnrollments = user.enrollments.map((enrollment) => {
+    const processedEnrollments = [];
+    for (const enrollment of user.enrollments) {
       const course = enrollment.course;
       const totalLessons = course.modules.reduce((sum, mod) => sum + mod.lessons.length, 0);
       
@@ -195,21 +198,33 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
       course.modules.forEach((mod) => {
         mod.lessons.forEach((lesson) => {
           const prog = lesson.progress[0];
-          if (prog && prog.isCompleted) {
+          if (prog && (prog.isCompleted || enrollment.status === 'COMPLETED')) {
             completedLessonsInCourse++;
             completedLessonsCount++;
           }
         });
       });
 
-      const progressPercentage = totalLessons > 0 ? Math.round((completedLessonsInCourse / totalLessons) * 100) : 0;
+      const progressPercentage =
+        enrollment.status === 'COMPLETED'
+          ? 100
+          : totalLessons > 0
+            ? Math.round((completedLessonsInCourse / totalLessons) * 100)
+            : 0;
       totalProgressSum += progressPercentage;
+
+      if (enrollment.courseProgress !== progressPercentage) {
+        await prisma.enrollment.update({
+          where: { id: enrollment.id },
+          data: { courseProgress: progressPercentage },
+        });
+      }
 
       if (progressPercentage === 100 && totalLessons > 0) {
         completedCoursesCount++;
       }
 
-      return {
+      processedEnrollments.push({
         id: enrollment.id,
         courseId: course.id,
         title: course.title,
@@ -217,9 +232,10 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         instructorName: course.instructor.name,
         category: course.category.name,
         progress: progressPercentage,
+        courseProgress: enrollment.courseProgress ?? progressPercentage,
         enrolledAt: enrollment.createdAt,
-      };
-    });
+      });
+    }
 
     const averageProgress = totalCourses > 0 ? Math.round(totalProgressSum / totalCourses) : 0;
     const studyHours = Math.round(completedLessonsCount * 0.4 * 10) / 10;

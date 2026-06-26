@@ -11,13 +11,15 @@ interface EnrolledCourse {
   instructorName: string;
   category: string;
   progress: number;
+  courseProgress?: number;
 }
 
 export function MyCourses() {
   const [courses, setCourses] = useState<EnrolledCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadCourses = () => {
+    setLoading(true);
     api.get('/auth/profile')
       .then((res) => {
         setCourses(res.data.enrollments || []);
@@ -28,6 +30,14 @@ export function MyCourses() {
       .finally(() => {
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadCourses();
+
+    const onProgressUpdate = () => loadCourses();
+    window.addEventListener('course-progress-updated', onProgressUpdate as EventListener);
+    return () => window.removeEventListener('course-progress-updated', onProgressUpdate as EventListener);
   }, []);
 
   if (loading) {
@@ -89,23 +99,23 @@ export function MyCourses() {
 
               <div className="mt-5 pt-4 border-t border-border/60 space-y-3">
                 <div className="flex items-center justify-between text-xs font-medium">
-                  <span className={course.progress === 100 ? 'text-emerald-500' : 'text-primary'}>
-                    {course.progress === 100 ? 'Completado' : `${course.progress}%`}
+                  <span className={((course.courseProgress ?? course.progress) === 100) ? 'text-emerald-500' : 'text-primary'}>
+                    {(course.courseProgress ?? course.progress) === 100 ? 'Completado' : `${course.courseProgress ?? course.progress}%`}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-secondary overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      course.progress === 100 ? 'bg-emerald-500' : 'bg-primary'
+                      (course.courseProgress ?? course.progress) === 100 ? 'bg-emerald-500' : 'bg-primary'
                     }`}
-                    style={{ width: `${course.progress}%` }}
+                    style={{ width: `${course.courseProgress ?? course.progress}%` }}
                   />
                 </div>
                 <Link
                   to={`/course/${course.courseId}`}
                   className="block text-center w-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all py-2 rounded-xl text-xs font-semibold mt-2"
                 >
-                  {course.progress === 100 ? 'Repasar curso' : 'Continuar aprendiendo'}
+                  {(course.courseProgress ?? course.progress) === 100 ? 'Repasar curso' : 'Continuar aprendiendo'}
                 </Link>
               </div>
             </div>

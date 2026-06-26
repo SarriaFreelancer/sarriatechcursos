@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Award, Clock, BarChart3, User, Mail, Calendar, Key, CheckCircle, GraduationCap, Shield, Edit, Settings } from 'lucide-react';
+import { BookOpen, Award, Clock, BarChart3, Mail, Calendar, Key, CheckCircle, GraduationCap, Shield, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/axios';
 
@@ -28,6 +28,7 @@ interface ProfileData {
     instructorName: string;
     category: string;
     progress: number;
+    courseProgress?: number;
     enrolledAt: string;
   }>;
   instructorStats?: {
@@ -58,30 +59,26 @@ export function Profile() {
   const [errorMsg, setErrorMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'in_progress' | 'completed'>('all');
 
-  useEffect(() => {
-    let cancelled = false;
-
+  const loadProfile = () => {
+    setLoading(true);
     api
       .get('/auth/profile')
       .then((res) => {
-        if (!cancelled) {
-          setData(res.data);
-        }
+        setData(res.data);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setErrorMsg(err.response?.data?.error || 'No se pudo cargar el perfil.');
-        }
+        setErrorMsg(err.response?.data?.error || 'No se pudo cargar el perfil.');
       })
       .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        setLoading(false);
       });
+  };
 
-    return () => {
-      cancelled = true;
-    };
+  useEffect(() => {
+    loadProfile();
+    const onProgressUpdate = () => loadProfile();
+    window.addEventListener('course-progress-updated', onProgressUpdate as EventListener);
+    return () => window.removeEventListener('course-progress-updated', onProgressUpdate as EventListener);
   }, []);
 
   if (loading) {
@@ -107,8 +104,9 @@ export function Profile() {
   };
 
   const filteredEnrollments = enrollments.filter((enroll) => {
-    if (activeTab === 'in_progress') return enroll.progress < 100;
-    if (activeTab === 'completed') return enroll.progress === 100;
+    const progress = enroll.courseProgress ?? enroll.progress;
+    if (activeTab === 'in_progress') return progress < 100;
+    if (activeTab === 'completed') return progress === 100;
     return true;
   });
 
@@ -287,7 +285,7 @@ export function Profile() {
             { label: 'Certificados', value: stats.certificatesCount, icon: Award, color: 'text-amber-500 bg-amber-500/10' },
             { label: 'Horas de Estudio', value: `${stats.studyHours}h`, icon: Clock, color: 'text-purple-500 bg-purple-500/10' },
             { label: 'Progreso Promedio', value: `${stats.averageProgress}%`, icon: BarChart3, color: 'text-rose-500 bg-rose-500/10' },
-          ].map((item, index) => (
+          ].map((item) => (
             <div
               key={item.label}
               className="bg-card border border-border rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm"

@@ -223,6 +223,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
     }
 
     let isEnrolled = false;
+    let enrollment: { courseProgress: number; status: string } | null = null;
     let userId: number | null = null;
 
     const authHeader = req.headers.authorization;
@@ -239,8 +240,9 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
           if (user?.role.name === 'ADMIN') {
             isEnrolled = true;
           } else {
-            const enrollment = await prisma.enrollment.findFirst({
+            enrollment = await prisma.enrollment.findFirst({
               where: { courseId, studentId: userId },
+              select: { courseProgress: true, status: true },
             });
             if (enrollment) {
               isEnrolled = true;
@@ -293,6 +295,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       level: course.level,
       price: course.price,
       status: course.status,
+      courseProgress: enrollment?.courseProgress ?? 0,
+      enrollmentStatus: enrollment?.status ?? null,
       instructorId: course.instructorId,
       categoryId: course.categoryId,
       createdAt: course.createdAt,

@@ -143,6 +143,7 @@ router.post('/:id/progress', authMiddleware, async (req: AuthRequest, res: Respo
 
     const existingProgress = await prisma.progress.findFirst({
       where: { studentId, lessonId },
+      orderBy: { updatedAt: 'desc' },
     });
 
     const progress = existingProgress
@@ -177,6 +178,7 @@ router.post('/:id/progress', authMiddleware, async (req: AuthRequest, res: Respo
     await prisma.enrollment.updateMany({
       where: { courseId: lesson.module.courseId, studentId },
       data: {
+        courseProgress,
         status: courseProgress >= 100 ? 'COMPLETED' : 'ACTIVE',
       },
     });

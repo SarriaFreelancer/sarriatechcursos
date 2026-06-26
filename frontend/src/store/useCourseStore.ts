@@ -5,16 +5,19 @@ interface CourseState {
   course: Course | null;
   activeLessonId: number | null;
   completedLessons: number[];
+  courseProgress: number;
   setCourse: (course: Course | null) => void;
   setActiveLesson: (id: number) => void;
   markLessonComplete: (id: number) => void;
   setCompletedLessons: (ids: number[]) => void;
+  setCourseProgress: (progress: number) => void;
 }
 
 export const useCourseStore = create<CourseState>((set) => ({
   course: null,
   activeLessonId: null,
   completedLessons: [],
+  courseProgress: 0,
   setCourse: (course) => set({
     course,
     activeLessonId: course?.modules[0]?.lessons[0]?.id || null,
@@ -26,4 +29,5 @@ export const useCourseStore = create<CourseState>((set) => ({
       : [...state.completedLessons, id]
   })),
   setCompletedLessons: (ids) => set({ completedLessons: Array.from(new Set(ids)) }),
+  setCourseProgress: (courseProgress) => set({ courseProgress }),
 }));
