@@ -285,6 +285,10 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       }),
     }));
 
+    const enrollmentStatus = enrollment?.status ?? null;
+    const persistedProgress = enrollment?.courseProgress ?? 0;
+    const courseProgress = enrollmentStatus === 'COMPLETED' || persistedProgress >= 100 ? 100 : persistedProgress;
+
     res.json({
       id: course.id,
       title: course.title,
@@ -295,8 +299,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       level: course.level,
       price: course.price,
       status: course.status,
-      courseProgress: enrollment?.courseProgress ?? 0,
-      enrollmentStatus: enrollment?.status ?? null,
+      courseProgress,
+      enrollmentStatus,
       instructorId: course.instructorId,
       categoryId: course.categoryId,
       createdAt: course.createdAt,

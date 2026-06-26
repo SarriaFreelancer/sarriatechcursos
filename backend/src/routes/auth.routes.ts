@@ -205,12 +205,12 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         });
       });
 
+      const storedProgress = enrollment.courseProgress ?? 0;
+      const computedProgress = totalLessons > 0 ? Math.round((completedLessonsInCourse / totalLessons) * 100) : 0;
       const progressPercentage =
-        enrollment.status === 'COMPLETED'
+        enrollment.status === 'COMPLETED' || storedProgress >= 100
           ? 100
-          : totalLessons > 0
-            ? Math.round((completedLessonsInCourse / totalLessons) * 100)
-            : 0;
+          : Math.max(storedProgress, computedProgress);
       totalProgressSum += progressPercentage;
 
       if (enrollment.courseProgress !== progressPercentage) {
@@ -232,7 +232,8 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         instructorName: course.instructor.name,
         category: course.category.name,
         progress: progressPercentage,
-        courseProgress: enrollment.courseProgress ?? progressPercentage,
+        courseProgress: progressPercentage,
+        status: enrollment.status === 'COMPLETED' || progressPercentage >= 100 ? 'COMPLETED' : enrollment.status,
         enrolledAt: enrollment.createdAt,
       });
     }

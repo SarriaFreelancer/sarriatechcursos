@@ -17,6 +17,7 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
   const completedLessons = useCourseStore((state) => state.completedLessons);
   const course = useCourseStore((state) => state.course);
   const setActiveLesson = useCourseStore((state) => state.setActiveLesson);
+  const courseProgress = useCourseStore((state) => state.courseProgress);
   const [completed, setCompleted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -31,9 +32,35 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [nextLessonCountdown, setNextLessonCountdown] = useState<number | null>(null);
   const [nextLessonTitle, setNextLessonTitle] = useState('');
+  const [showNextLessonOverlay, setShowNextLessonOverlay] = useState(true);
+  const [securityHidden, setSecurityHidden] = useState(false);
   const hideControlsTimer = useRef<number | null>(null);
   const nextLessonTimer = useRef<number | null>(null);
   const countdownTimer = useRef<number | null>(null);
+
+  const hideVideoImmediately = () => {
+    const container = playerRef.current;
+    const video = videoRef.current;
+    if (container) {
+      container.style.backgroundColor = '#000';
+    }
+    if (video) {
+      video.style.visibility = 'hidden';
+      video.style.opacity = '0';
+    }
+  };
+
+  const restoreVideoVisibility = () => {
+    const container = playerRef.current;
+    const video = videoRef.current;
+    if (container) {
+      container.style.backgroundColor = '#000';
+    }
+    if (video) {
+      video.style.visibility = 'visible';
+      video.style.opacity = '1';
+    }
+  };
 
   const qualities = useMemo(() => {
     const items = lesson.video?.qualities && lesson.video.qualities.length > 0
@@ -54,6 +81,9 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
     setSelectedCaption('');
     setCurrentTime(0);
     setDuration(0);
+    setShowNextLessonOverlay(true);
+    setSecurityHidden(false);
+    restoreVideoVisibility();
   }, [lesson.id]);
 
   useEffect(() => {
@@ -72,7 +102,9 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
 
   useEffect(() => {
     const onVisibilityChange = () => {
-      if (document.hidden) {
+      if (document.hidden && !document.pictureInPictureElement) {
+        setSecurityHidden(true);
+        hideVideoImmediately();
         setAntiCaptureMsg('La pantalla se ocultó. El video se pausó por seguridad.');
         videoRef.current?.pause();
         setPlaying(false);
@@ -80,14 +112,33 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
     };
 
     const onBlur = () => {
+      if (document.pictureInPictureElement) return;
+      setSecurityHidden(true);
+      hideVideoImmediately();
       setAntiCaptureMsg('Se detectó cambio de foco. El video se pausó por seguridad.');
       videoRef.current?.pause();
       setPlaying(false);
     };
 
+    const onEnterPictureInPicture = () => {
+      restoreVideoVisibility();
+      setSecurityHidden(false);
+    };
+
+    const onLeavePictureInPicture = () => {
+      restoreVideoVisibility();
+      setSecurityHidden(false);
+    };
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && ['S', 'I', 'J', 'C'].includes(e.key.toUpperCase()))) {
+        setSecurityHidden(true);
+        hideVideoImmediately();
         setAntiCaptureMsg('Acción bloqueada durante reproducción.');
+        if (videoRef.current) {
+          videoRef.current.pause();
+        }
+        document.body.style.backgroundColor = '#000';
         e.preventDefault();
       }
     };
@@ -95,10 +146,14 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('blur', onBlur);
     window.addEventListener('keydown', onKeyDown);
+    videoRef.current?.addEventListener('enterpictureinpicture', onEnterPictureInPicture);
+    videoRef.current?.addEventListener('leavepictureinpicture', onLeavePictureInPicture);
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('blur', onBlur);
       window.removeEventListener('keydown', onKeyDown);
+      videoRef.current?.removeEventListener('enterpictureinpicture', onEnterPictureInPicture);
+      videoRef.current?.removeEventListener('leavepictureinpicture', onLeavePictureInPicture);
     };
   }, []);
 
@@ -191,6 +246,8 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
     handleSeek(video.currentTime + seconds);
   };
 
+  const isCourseCompleted = courseProgress >= 100;
+
   const scheduleNextLesson = () => {
     if (!course) return;
 
@@ -213,21 +270,24 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
 
     setNextLessonTitle(nextLesson.title);
     setNextLessonCountdown(10);
+    setShowNextLessonOverlay(true);
 
+    let remainingSeconds = 10;
     countdownTimer.current = window.setInterval(() => {
-      setNextLessonCountdown((value) => {
-        if (value === null || value <= 1) {
-          if (countdownTimer.current) {
-            window.clearInterval(countdownTimer.current);
-            countdownTimer.current = null;
-          }
-          setActiveLesson(nextLesson.id);
-          setNextLessonTitle('');
-          return null;
-        }
+      remainingSeconds -= 1;
 
-        return value - 1;
-      });
+      if (remainingSeconds <= 0) {
+        if (countdownTimer.current) {
+          window.clearInterval(countdownTimer.current);
+          countdownTimer.current = null;
+        }
+        setNextLessonCountdown(null);
+        setNextLessonTitle('');
+        setActiveLesson(nextLesson.id);
+        return;
+      }
+
+      setNextLessonCountdown(remainingSeconds);
     }, 1000);
   };
 
@@ -270,6 +330,17 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
 
   return (
     <div ref={playerRef} className="w-full bg-black aspect-video rounded-xl overflow-hidden relative shadow-lg group">
+      {securityHidden && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black">
+          <div className="max-w-sm rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-5 text-center text-red-100 backdrop-blur-sm">
+            <ShieldAlert className="mx-auto mb-3 h-8 w-8 text-red-300" />
+            <p className="text-sm font-semibold">Video oculto por seguridad</p>
+            <p className="mt-1 text-xs text-red-100/80">
+              Se detectó una acción sospechosa en la ventana.
+            </p>
+          </div>
+        </div>
+      )}
       <video
         ref={videoRef}
         key={lesson.id}
@@ -295,16 +366,22 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
         onMouseMove={showControls}
         onMouseEnter={() => {
           setControlsVisible(true);
+          if (nextLessonCountdown !== null) setShowNextLessonOverlay(false);
           if (hideControlsTimer.current) window.clearTimeout(hideControlsTimer.current);
         }}
         onMouseLeave={() => {
           if (playing) scheduleControlsHide();
           else setControlsVisible(true);
+          if (nextLessonCountdown !== null) setShowNextLessonOverlay(true);
         }}
         onContextMenu={(e) => e.preventDefault()}
-        onLoadedMetadata={() => syncProgress(0, false)}
+        onLoadedMetadata={() => {
+          // No sobrescribir el progreso guardado con 0 al cargar el video.
+          // El avance se persiste cuando el estudiante realmente lo reproduce.
+        }}
         autoPlay
         muted={muted}
+        disablePictureInPicture={false}
         controlsList="nodownload noplaybackrate noremoteplayback"
       >
         {lesson.video?.captions?.map((track) => (
@@ -330,6 +407,11 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
           </div>
         )}
       </div>
+      {isCourseCompleted && (
+        <div className="absolute left-3 top-14 z-10 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-300 backdrop-blur-sm">
+          Curso completado
+        </div>
+      )}
       <div className={`absolute inset-x-0 bottom-0 p-3 sm:p-4 transition-opacity duration-300 ${controlsVisible ? 'opacity-100' : 'opacity-0'}`}>
         <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-black/65 backdrop-blur-md px-3 py-2 sm:px-4 sm:py-3 space-y-2 pointer-events-auto">
           <div className="space-y-1">
@@ -444,7 +526,7 @@ export function VideoPlayer({ lesson }: VideoPlayerProps) {
           </div>
         </div>
       </div>
-      {nextLessonCountdown !== null && (
+      {nextLessonCountdown !== null && showNextLessonOverlay && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/35 backdrop-blur-[2px] pointer-events-none">
           <div className="flex flex-col items-center gap-4 rounded-[28px] border border-white/10 bg-black/70 px-8 py-7 shadow-2xl">
             <div className="relative h-28 w-28">

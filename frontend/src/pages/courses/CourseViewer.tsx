@@ -118,9 +118,14 @@ export function CourseViewer() {
         }
 
         const backendCourse = response.data as BackendCourse;
+        const persistedProgress =
+          backendCourse.enrollmentStatus === 'COMPLETED' || (backendCourse.courseProgress ?? 0) >= 100
+            ? 100
+            : backendCourse.courseProgress ?? 0;
+
         setIsEnrolled(backendCourse.isEnrolled);
         setFullCourseData(backendCourse);
-        useCourseStore.getState().setCourseProgress(backendCourse.courseProgress ?? 0);
+        useCourseStore.getState().setCourseProgress(persistedProgress);
 
         const normalizedCourse: Course = {
           id: backendCourse.id,
@@ -160,7 +165,7 @@ export function CourseViewer() {
         };
 
         setCourse(normalizedCourse);
-        if ((backendCourse.courseProgress ?? 0) >= 100) {
+        if (persistedProgress >= 100) {
           const completedLessonIds = normalizedCourse.modules.flatMap((module) => module.lessons.map((lesson) => lesson.id));
           useCourseStore.getState().setCompletedLessons(completedLessonIds);
         }

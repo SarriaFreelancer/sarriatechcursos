@@ -12,6 +12,12 @@ interface EnrolledCourse {
   category: string;
   progress: number;
   courseProgress?: number;
+  status?: string;
+}
+
+function getCourseProgress(course: EnrolledCourse) {
+  const progress = Math.max(course.courseProgress ?? 0, course.progress ?? 0);
+  return course.status === 'COMPLETED' || progress >= 100 ? 100 : progress;
 }
 
 export function MyCourses() {
@@ -99,23 +105,23 @@ export function MyCourses() {
 
               <div className="mt-5 pt-4 border-t border-border/60 space-y-3">
                 <div className="flex items-center justify-between text-xs font-medium">
-                  <span className={((course.courseProgress ?? course.progress) === 100) ? 'text-emerald-500' : 'text-primary'}>
-                    {(course.courseProgress ?? course.progress) === 100 ? 'Completado' : `${course.courseProgress ?? course.progress}%`}
+                  <span className={getCourseProgress(course) === 100 ? 'text-emerald-500' : 'text-primary'}>
+                    {getCourseProgress(course) === 100 ? 'Completado' : `${getCourseProgress(course)}%`}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-secondary overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      (course.courseProgress ?? course.progress) === 100 ? 'bg-emerald-500' : 'bg-primary'
+                      getCourseProgress(course) === 100 ? 'bg-emerald-500' : 'bg-primary'
                     }`}
-                    style={{ width: `${course.courseProgress ?? course.progress}%` }}
+                    style={{ width: `${getCourseProgress(course)}%` }}
                   />
                 </div>
                 <Link
                   to={`/course/${course.courseId}`}
                   className="block text-center w-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all py-2 rounded-xl text-xs font-semibold mt-2"
                 >
-                  {(course.courseProgress ?? course.progress) === 100 ? 'Repasar curso' : 'Continuar aprendiendo'}
+                  {getCourseProgress(course) === 100 ? 'Repasar curso' : 'Continuar aprendiendo'}
                 </Link>
               </div>
             </div>

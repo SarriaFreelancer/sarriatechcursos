@@ -173,13 +173,18 @@ router.post('/:id/progress', authMiddleware, async (req: AuthRequest, res: Respo
     });
 
     const totalLessons = lessonIds.length;
-    const courseProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+    const computedCourseProgress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+    const currentCourseProgress = enrollment.courseProgress ?? 0;
+    const courseProgress =
+      enrollment.status === 'COMPLETED' || currentCourseProgress >= 100
+        ? 100
+        : Math.max(currentCourseProgress, computedCourseProgress);
 
     await prisma.enrollment.updateMany({
       where: { courseId: lesson.module.courseId, studentId },
       data: {
         courseProgress,
-        status: courseProgress >= 100 ? 'COMPLETED' : 'ACTIVE',
+        status: courseProgress >= 100 ? 'COMPLETED' : enrollment.status || 'ACTIVE',
       },
     });
 

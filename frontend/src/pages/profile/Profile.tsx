@@ -104,7 +104,7 @@ export function Profile() {
   };
 
   const filteredEnrollments = enrollments.filter((enroll) => {
-    const progress = enroll.courseProgress ?? enroll.progress;
+    const progress = Math.max(enroll.courseProgress ?? 0, enroll.progress ?? 0);
     if (activeTab === 'in_progress') return progress < 100;
     if (activeTab === 'completed') return progress === 100;
     return true;
@@ -333,16 +333,18 @@ export function Profile() {
                     <span className="text-muted-foreground">
                       Inscrito el: {new Date(enrollment.enrolledAt).toLocaleDateString()}
                     </span>
-                    <span className={enrollment.progress === 100 ? 'text-emerald-500' : 'text-primary'}>
-                      {enrollment.progress === 100 ? 'Completado' : `${enrollment.progress}%`}
+                    <span className={Math.max(enrollment.courseProgress ?? 0, enrollment.progress ?? 0) === 100 ? 'text-emerald-500' : 'text-primary'}>
+                      {Math.max(enrollment.courseProgress ?? 0, enrollment.progress ?? 0) === 100
+                        ? 'Completado'
+                        : `${Math.max(enrollment.courseProgress ?? 0, enrollment.progress ?? 0)}%`}
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-secondary overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        enrollment.progress === 100 ? 'bg-emerald-500' : 'bg-primary'
+                        Math.max(enrollment.courseProgress ?? 0, enrollment.progress ?? 0) === 100 ? 'bg-emerald-500' : 'bg-primary'
                       }`}
-                      style={{ width: `${enrollment.progress}%` }}
+                      style={{ width: `${Math.max(enrollment.courseProgress ?? 0, enrollment.progress ?? 0)}%` }}
                     />
                   </div>
                 </div>

@@ -14,6 +14,7 @@ type ProfileCourse = {
   category: string;
   progress: number;
   courseProgress?: number;
+  status?: string;
   enrolledAt: string;
 };
 
@@ -33,7 +34,7 @@ function toCertificateData(course: ProfileCourse, studentName: string): Certific
     course_description: `Curso de ${course.category} impartido por ${course.instructorName}.`,
     completion_date: date.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }),
     course_duration: '30 horas en vivo',
-    course_level: (course.courseProgress ?? course.progress) >= 100 ? 'Aprobado' : 'En progreso',
+    course_level: Math.max(course.courseProgress ?? 0, course.progress ?? 0) >= 100 || course.status === 'COMPLETED' ? 'Aprobado' : 'En progreso',
     certificate_id: id,
     verification_url: `https://sarriatech.com/certificados/${id}`,
     instructor_name: course.instructorName,
@@ -150,7 +151,7 @@ function buildPrintableHtml(data: CertificateData, previewMode: boolean) {
                 <div class="brand-sub">Software Dev Academy</div>
               </div>
             </div>
-                <div class="top-right">
+            <div class="top-right">
               <div class="id-label">Certificado ID</div>
               <div class="id-value">${data.certificate_id}</div>
             </div>
@@ -261,7 +262,9 @@ export function Certificates() {
     return profile.enrollments.find((enrollment) => enrollment.courseId === selectedCourseId) || profile.enrollments[0] || null;
   }, [profile, selectedCourseId]);
 
-  const selectedCourseProgress = selectedCourse ? (selectedCourse.courseProgress ?? selectedCourse.progress) : 0;
+  const selectedCourseProgress = selectedCourse
+    ? Math.max(selectedCourse.courseProgress ?? 0, selectedCourse.progress ?? 0, selectedCourse.status === 'COMPLETED' ? 100 : 0)
+    : 0;
   const courseCompleted = selectedCourseProgress >= 100;
 
   const certificateData = useMemo(() => {
@@ -412,7 +415,9 @@ export function Certificates() {
           </div>
 
           <div className="rounded-2xl border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
-            Modo prueba: aunque el curso no esté completo, puedes generar la vista previa del certificado con esta plantilla fija.
+            {courseCompleted
+              ? 'El curso ya alcanzó el 100% y el certificado está habilitado.'
+              : 'El certificado permanecerá bloqueado hasta completar el 100% del curso.'}
           </div>
         </div>
 
@@ -420,7 +425,21 @@ export function Certificates() {
           <div className="overflow-hidden rounded-[24px] bg-[#050505] p-2 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:rounded-[32px] sm:p-4">
             <div className="mx-auto flex w-full justify-center">
               <div ref={certificateRef} className="w-full max-w-[1400px]">
-                <CertificateTemplate data={previewData} previewMode={!courseCompleted} />
+                {courseCompleted ? (
+                  <CertificateTemplate data={previewData} previewMode={false} />
+                ) : (
+                  <div className="flex min-h-[760px] flex-col items-center justify-center gap-4 rounded-[28px] border border-dashed border-lime-400/30 bg-card px-8 py-16 text-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/10 text-lime-500">
+                      <ShieldCheck className="h-10 w-10" />
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="text-2xl font-black tracking-tight text-foreground">Certificado bloqueado</h2>
+                      <p className="mx-auto max-w-xl text-sm text-muted-foreground">
+                        Para visualizar y descargar el certificado, primero debes terminar el curso al 100%.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
