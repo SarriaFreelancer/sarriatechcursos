@@ -5,31 +5,15 @@ import { authMiddleware, AuthRequest, requireRole } from '../middleware/auth.mid
 const router = Router();
 const prisma = new PrismaClient();
 
-function courseAverageProgress(records: Array<{ percentage: number }>) {
-  if (records.length === 0) {
-    return 0;
-  }
-
-  return Math.round((records.reduce((sum, record) => sum + record.percentage, 0) / records.length) * 100) / 100;
-}
-
 router.use(authMiddleware, requireRole('ADMIN'));
 
 router.get('/overview', async (_req: AuthRequest, res: Response) => {
   try {
-    const [courses, enrollments, progresses] = await Promise.all([
+    const [courses, enrollments] = await Promise.all([
       prisma.course.findMany({
         include: {
           instructor: { select: { id: true, name: true, email: true } },
           category: { select: { id: true, name: true } },
-          modules: {
-            select: {
-              id: true,
-              lessons: {
-                select: { id: true },
-              },
-            },
-          },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -39,50 +23,35 @@ router.get('/overview', async (_req: AuthRequest, res: Response) => {
         },
         orderBy: { createdAt: 'desc' },
       }),
-      prisma.progress.findMany({
-        include: {
-          lesson: {
-            select: {
-              module: { select: { courseId: true } },
-            },
-          },
-        },
-      }),
     ]);
-
-    const progressByCourseAndStudent = new Map<string, typeof progresses>();
-
-    for (const progress of progresses) {
-      const courseId = progress.lesson.module.courseId;
-      const key = `${courseId}:${progress.studentId}`;
-      const existing = progressByCourseAndStudent.get(key) ?? [];
-      existing.push(progress);
-      progressByCourseAndStudent.set(key, existing);
-    }
 
     const totalStudents = new Set(enrollments.map((enrollment) => enrollment.studentId)).size;
 
     const coursesWithStats = courses.map((course) => {
       const courseEnrollments = enrollments.filter((enrollment) => enrollment.courseId === course.id);
+
       const students = courseEnrollments.map((enrollment) => {
-        const key = `${course.id}:${enrollment.studentId}`;
-        const studentProgress = progressByCourseAndStudent.get(key) ?? [];
-        const lastProgressAt = studentProgress.reduce<Date | null>((latest, progress) => {
-          if (!latest || progress.updatedAt > latest) {
-            return progress.updatedAt;
-          }
-          return latest;
-        }, null);
+        // Use the same source as the student view: enrollment.courseProgress
+        const rawProgress = enrollment.courseProgress ?? 0;
+        const progress =
+          enrollment.status === 'COMPLETED' || rawProgress >= 100 ? 100 : rawProgress;
 
         return {
           studentId: enrollment.student.id,
           name: enrollment.student.name,
           email: enrollment.student.email,
           enrolledAt: enrollment.createdAt,
-          progress: courseAverageProgress(studentProgress),
-          lastProgressAt,
+          progress,
+          lastProgressAt: enrollment.updatedAt,
         };
       });
+
+      const averageProgress =
+        students.length === 0
+          ? 0
+          : Math.round(
+              (students.reduce((sum, s) => sum + s.progress, 0) / students.length) * 100
+            ) / 100;
 
       return {
         id: course.id,
@@ -90,9 +59,7 @@ router.get('/overview', async (_req: AuthRequest, res: Response) => {
         category: course.category,
         instructor: course.instructor,
         enrolledStudents: courseEnrollments.length,
-        averageProgress: courseAverageProgress(
-          students.map((student) => ({ percentage: student.progress }))
-        ),
+        averageProgress,
         students,
       };
     });
@@ -136,53 +103,27 @@ router.get('/courses/:courseId/students', async (req: AuthRequest, res: Response
       return res.status(404).json({ error: 'Course not found' });
     }
 
-    const [enrollments, progresses] = await Promise.all([
-      prisma.enrollment.findMany({
-        where: { courseId },
-        include: {
-          student: { select: { id: true, name: true, email: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.progress.findMany({
-        where: {
-          lesson: {
-            module: { courseId },
-          },
-        },
-        include: {
-          lesson: {
-            select: {
-              module: { select: { courseId: true } },
-            },
-          },
-        },
-      }),
-    ]);
-
-    const progressByStudent = new Map<number, typeof progresses>();
-    for (const progress of progresses) {
-      const existing = progressByStudent.get(progress.studentId) ?? [];
-      existing.push(progress);
-      progressByStudent.set(progress.studentId, existing);
-    }
+    const enrollments = await prisma.enrollment.findMany({
+      where: { courseId },
+      include: {
+        student: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
     const students = enrollments.map((enrollment) => {
-      const studentProgress = progressByStudent.get(enrollment.studentId) ?? [];
-      const lastProgressAt = studentProgress.reduce<Date | null>((latest, progress) => {
-        if (!latest || progress.updatedAt > latest) {
-          return progress.updatedAt;
-        }
-        return latest;
-      }, null);
+      // Use the same source as the student view: enrollment.courseProgress
+      const rawProgress = enrollment.courseProgress ?? 0;
+      const progress =
+        enrollment.status === 'COMPLETED' || rawProgress >= 100 ? 100 : rawProgress;
 
       return {
         studentId: enrollment.student.id,
         name: enrollment.student.name,
         email: enrollment.student.email,
         enrolledAt: enrollment.createdAt,
-        progress: courseAverageProgress(studentProgress),
-        lastProgressAt,
+        progress,
+        lastProgressAt: enrollment.updatedAt,
       };
     });
 

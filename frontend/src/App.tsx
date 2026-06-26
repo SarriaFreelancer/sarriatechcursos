@@ -19,7 +19,7 @@ import { Toaster } from 'react-hot-toast';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background font-sans antialiased text-foreground">
+      <div className="min-h-screen bg-background font-sans antialiased text-foreground flex flex-col">
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
@@ -41,6 +41,12 @@ function App() {
             <Route path="admin" element={<RequireRole roleNames={['ADMIN']}><AdminDashboard /></RequireRole>} />
           </Route>
         </Routes>
+        <footer className="mt-auto border-t border-border/70 bg-background/70 px-4 py-4 text-center text-[11px] text-muted-foreground sm:px-6 sm:py-5">
+          <div className="mx-auto flex max-w-6xl flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-[11px] sm:text-sm">copyright sarriatech software dev 2026</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground/80">todos los derechos reservados</span>
+          </div>
+        </footer>
         <Toaster position="bottom-right" />
       </div>
     </Router>

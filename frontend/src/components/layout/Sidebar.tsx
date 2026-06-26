@@ -70,7 +70,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
           {links.map((link) => {
             const Icon = link.icon;
-            const isActive = location.pathname === link.path || location.pathname.startsWith(link.path + '/');
+            const isActive =
+              link.path === '/dashboard'
+                ? location.pathname === '/dashboard'
+                : location.pathname === link.path || location.pathname.startsWith(link.path + '/');
             return (
               <Link
                 key={link.path}

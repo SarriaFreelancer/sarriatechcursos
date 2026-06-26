@@ -31,20 +31,26 @@ model User {
 model Role {
   id          Int      @id @default(autoincrement())
   name        String   @unique // ADMIN, INSTRUCTOR, STUDENT
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   permissions Permission[]
   users       User[]
 }
 
 model Permission {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  roles Role[]
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roles     Role[]
 }
 
 model Category {
-  id      Int      @id @default(autoincrement())
-  name    String   @unique
-  courses Course[]
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courses   Course[]
 }
 
 model Course {
@@ -75,6 +81,8 @@ model Module {
   order       Int
   courseId    Int
   course      Course   @relation(fields: [courseId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   lessons     Lesson[]
 }
 
@@ -87,40 +95,47 @@ model Lesson {
   module      Module   @relation(fields: [moduleId], references: [id])
   isFree      Boolean  @default(false)
   requiresEvidence Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   video       Video?
   resources   Resource[]
   evidenceSubmissions EvidenceSubmission[]
-  progress Progress[]
+  progress    Progress[]
   comments    Comment[]
 }
 
 model Video {
-  id        Int    @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   url       String
-  duration  Int?   // in seconds
-  lessonId  Int    @unique
-  lesson    Lesson @relation(fields: [lessonId], references: [id])
+  duration  Int?     // in seconds
+  lessonId  Int      @unique
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Resource {
-  id        Int    @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
   url       String
-  type      String // PDF, ZIP, CODE, etc.
+  type      String   // PDF, ZIP, CODE, etc.
   lessonId  Int
-  lesson    Lesson @relation(fields: [lessonId], references: [id])
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Enrollment {
-  id        Int      @id @default(autoincrement())
-  studentId Int
-  student   User     @relation(fields: [studentId], references: [id])
-  courseId  Int
-  course    Course   @relation(fields: [courseId], references: [id])
-  status    String   // ACTIVE, COMPLETED, CANCELLED
-  courseProgress Float @default(0)
-  createdAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  student        User     @relation(fields: [studentId], references: [id])
+  courseId       Int
+  course         Course   @relation(fields: [courseId], references: [id])
+  status         String   // ACTIVE, COMPLETED, CANCELLED
+  courseProgress Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Progress {
@@ -131,53 +146,56 @@ model Progress {
   lesson      Lesson   @relation(fields: [lessonId], references: [id])
   percentage  Float    @default(0)
   isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Certificate {
-  id          Int      @id @default(autoincrement())
-  code        String   @unique
-  studentId   Int
-  student     User     @relation(fields: [studentId], references: [id])
-  courseId    Int
-  url         String
-  issuedAt    DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  courseId  Int
+  url       String
+  issuedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
-  id          Int      @id @default(autoincrement())
-  studentId   Int
-  student     User     @relation(fields: [studentId], references: [id])
-  courseId    Int
-  amount      Decimal  @db.Decimal(10, 2)
-  method      String   // MANUAL, PAYPAL, STRIPE, etc.
-  status      String   // PENDING, APPROVED, REJECTED
-  proofUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  courseId  Int
+  amount    Decimal  @db.Decimal(10, 2)
+  method    String   // MANUAL, PAYPAL, STRIPE, etc.
+  status    String   // PENDING, APPROVED, REJECTED
+  proofUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model EvidenceSubmission {
-  id          Int      @id @default(autoincrement())
-  studentId   Int
-  student     User     @relation(fields: [studentId], references: [id])
-  lessonId    Int
-  lesson      Lesson   @relation(fields: [lessonId], references: [id])
-  url         String
-  status      String   // PENDING, APPROVED, REJECTED
-  feedback    String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  lessonId  Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  url       String
+  status    String   // PENDING, APPROVED, REJECTED
+  feedback  String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Notification {
-  id          Int      @id @default(autoincrement())
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
-  title       String
-  message     String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Comment {

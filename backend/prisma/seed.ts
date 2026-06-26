@@ -4,9 +4,8 @@ import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log('Seeding database...');
 
-  // Seed Roles
   const roles = ['ADMIN', 'INSTRUCTOR', 'STUDENT'];
   for (const name of roles) {
     await prisma.role.upsert({
@@ -15,7 +14,7 @@ async function main() {
       create: { name },
     });
   }
-  console.log('✅ Roles created: ADMIN, INSTRUCTOR, STUDENT');
+  console.log('Roles created: ADMIN, INSTRUCTOR, STUDENT');
 
   const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } });
   const instructorRole = await prisma.role.findUnique({ where: { name: 'INSTRUCTOR' } });
@@ -32,7 +31,7 @@ async function main() {
           roleId: adminRole.id,
         },
       });
-      console.log('✅ Admin user created: admin@sarriatech.com / admin123');
+      console.log('Admin user created: admin@sarriatech.com / admin123');
     }
   }
 
@@ -48,21 +47,21 @@ async function main() {
           roleId: instructorRole.id,
         },
       });
-      console.log('✅ Instructor user created: instructor@sarriatech.com / instructor123');
+      console.log('Instructor user created: instructor@sarriatech.com / instructor123');
     }
   }
 
-  // Seed Categories
   const categories = [
     'Desarrollo Web',
     'Inteligencia Artificial',
     'Ciberseguridad',
     'Bases de Datos',
-    'Diseño UX/UI',
+    'Diseno UX/UI',
     'DevOps y Cloud',
     'Mobile Development',
     'Data Science',
   ];
+
   for (const name of categories) {
     await prisma.category.upsert({
       where: { name },
@@ -70,14 +69,14 @@ async function main() {
       create: { name },
     });
   }
-  console.log(`✅ ${categories.length} Categories created`);
+  console.log(`${categories.length} Categories created`);
 
-  console.log('🎉 Seed complete!');
+  console.log('Seed complete!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error('Seed failed:', e);
     process.exit(1);
   })
   .finally(async () => {
