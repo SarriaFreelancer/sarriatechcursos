@@ -188,6 +188,80 @@ router.get('/mine', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (r
   }
 });
 
+// Get instructor dashboard data: own courses + enrolled students + progress
+router.get('/mine/overview', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (req: AuthRequest, res: Response) => {
+  try {
+    const instructorId = req.user!.userId;
+
+    const courses = await prisma.course.findMany({
+      where: { instructorId },
+      include: {
+        category: true,
+        instructor: { select: { id: true, name: true, email: true } },
+        _count: { select: { enrollments: true, modules: true } },
+        enrollments: {
+          include: {
+            student: { select: { id: true, name: true, email: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const coursesWithStudents = courses.map((course) => {
+      const students = course.enrollments.map((enrollment) => {
+        const rawProgress = enrollment.courseProgress ?? 0;
+        const progress = enrollment.status === 'COMPLETED' || rawProgress >= 100 ? 100 : rawProgress;
+
+        return {
+          studentId: enrollment.student.id,
+          name: enrollment.student.name,
+          email: enrollment.student.email,
+          enrolledAt: enrollment.createdAt,
+          progress,
+          lastProgressAt: enrollment.updatedAt,
+          status: enrollment.status,
+        };
+      });
+
+      const averageProgress =
+        students.length === 0
+          ? 0
+          : Math.round((students.reduce((sum, student) => sum + student.progress, 0) / students.length) * 10) / 10;
+
+      return {
+        id: course.id,
+        title: course.title,
+        status: course.status,
+        category: course.category,
+        instructor: course.instructor,
+        enrolledStudents: course._count.enrollments,
+        moduleCount: course._count.modules,
+        averageProgress,
+        students,
+      };
+    });
+
+    const totals = {
+      totalCourses: courses.length,
+      totalEnrollments: courses.reduce((sum, course) => sum + course._count.enrollments, 0),
+      totalStudents: new Set(courses.flatMap((course) => course.enrollments.map((enrollment) => enrollment.student.id))).size,
+      averageProgress:
+        coursesWithStudents.length === 0
+          ? 0
+          : Math.round(
+              (coursesWithStudents.reduce((sum, course) => sum + course.averageProgress, 0) / coursesWithStudents.length) * 10
+            ) / 10,
+    };
+
+    res.json({ totals, courses: coursesWithStudents });
+  } catch (error) {
+    console.error('Error fetching instructor overview:', error);
+    res.status(500).json({ error: 'Failed to fetch instructor overview' });
+  }
+});
+
 // Get a single course with full details
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {

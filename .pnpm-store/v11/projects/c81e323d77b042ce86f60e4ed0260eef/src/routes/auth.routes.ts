@@ -48,6 +48,18 @@ async function buildAuthResponse(user: { id: number; name: string; email: string
   };
 }
 
+function formatDuration(seconds: number) {
+  const totalMinutes = Math.max(0, Math.round(seconds / 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${minutes} minutos`;
+  }
+
+  return minutes > 0 ? `${hours} horas ${minutes} minutos` : `${hours} horas`;
+}
+
 // Register Endpoint
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -160,6 +172,7 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
                   include: {
                     lessons: {
                       include: {
+                        video: true,
                         progress: {
                           where: { studentId: userId },
                           orderBy: { updatedAt: 'desc' },
@@ -193,6 +206,9 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
     for (const enrollment of user.enrollments) {
       const course = enrollment.course;
       const totalLessons = course.modules.reduce((sum, mod) => sum + mod.lessons.length, 0);
+      const totalDurationSeconds = course.modules.reduce((moduleSum, mod) => {
+        return moduleSum + mod.lessons.reduce((lessonSum, lesson) => lessonSum + (lesson.video?.duration ?? 0), 0);
+      }, 0);
       
       let completedLessonsInCourse = 0;
       course.modules.forEach((mod) => {
@@ -235,6 +251,8 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         courseProgress: progressPercentage,
         status: enrollment.status === 'COMPLETED' || progressPercentage >= 100 ? 'COMPLETED' : enrollment.status,
         enrolledAt: enrollment.createdAt,
+        courseDurationSeconds: totalDurationSeconds,
+        courseDuration: formatDuration(totalDurationSeconds),
       });
     }
 

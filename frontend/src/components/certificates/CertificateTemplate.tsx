@@ -1,5 +1,3 @@
-import { CalendarDays, Clock3, Gauge, BadgeCheck, QrCode, Award } from 'lucide-react';
-
 export interface CertificateData {
   student_name: string;
   course_name: string;
@@ -17,182 +15,163 @@ export interface CertificateData {
 
 interface CertificateTemplateProps {
   data: CertificateData;
-  previewMode?: boolean;
 }
 
-function fitTextClass(text: string, base: string, long: string, extraLong: string) {
-  if (text.length > 36) return extraLong;
-  if (text.length > 24) return long;
-  return base;
+function esc(value: string) {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
-function signatureBlock(signature?: string, name = '', role = '') {
-  return (
-    <div className="flex min-w-0 flex-col items-center gap-3">
-      <div className="flex h-12 items-end justify-center sm:h-14">
-        {signature ? (
-          <img src={signature} alt={`${name} signature`} className="max-h-full max-w-[180px] object-contain" />
-        ) : (
-          <div className="text-center leading-tight">
-            <p className="text-xs font-semibold text-white sm:text-sm">{name}</p>
-            <p className="mt-1 text-[9px] uppercase tracking-[0.3em] text-lime-400 sm:text-xs sm:tracking-[0.35em]">{role}</p>
-          </div>
-        )}
-      </div>
-      <div className="h-px w-32 bg-lime-400/70 shadow-[0_0_16px_rgba(168,255,0,0.75)] sm:w-44" />
-    </div>
-  );
+function wrapText(text: string, maxChars: number) {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
 }
 
-export function CertificateTemplate({ data, previewMode = false }: CertificateTemplateProps) {
-  const nameClass = fitTextClass(data.student_name, 'text-[20px] sm:text-[32px]', 'text-[18px] sm:text-[28px]', 'text-[16px] sm:text-[24px]');
-  const courseClass = fitTextClass(data.course_name, 'text-[16px] sm:text-[24px]', 'text-[15px] sm:text-[20px]', 'text-[14px] sm:text-[18px]');
+export function buildCertificateSvg(data: CertificateData) {
+  const studentSize = data.student_name.length > 24 ? 19 : 25;
+  const courseSize = data.course_name.length > 28 ? 14 : 18;
+  const courseLines = wrapText(data.course_description, 58);
 
-  return (
-    <div className="certificate-shell relative mx-auto aspect-[279.4/215.9] w-full origin-top scale-[0.78] overflow-hidden rounded-[18px] border border-lime-400/35 bg-[#050505] text-white shadow-[0_0_80px_rgba(0,0,0,0.65)] print:scale-100 print:border-0 print:shadow-none sm:scale-100 sm:rounded-[28px]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,255,0,0.12),transparent_34%),radial-gradient(circle_at_bottom,rgba(168,255,0,0.08),transparent_32%),linear-gradient(180deg,#090909_0%,#050505_100%)]" />
-      <div className="absolute inset-0 opacity-35 bg-[linear-gradient(135deg,transparent_0%,transparent_35%,rgba(168,255,0,0.08)_36%,transparent_37%,transparent_100%)]" />
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-3 top-3 h-16 w-16 rounded-full border border-lime-400/25 border-dashed sm:left-5 sm:top-5 sm:h-24 sm:w-24" />
-        <div className="absolute right-3 top-3 h-[4.5rem] w-[4.5rem] rounded-full border border-lime-400/18 border-dashed sm:right-6 sm:top-6 sm:h-28 sm:w-28" />
-        <div className="absolute inset-x-6 top-1/2 h-px bg-gradient-to-r from-transparent via-lime-400/15 to-transparent" />
-      </div>
+  const instructorSignature = data.instructor_signature
+    ? `<image href="${data.instructor_signature}" x="0" y="-62" width="210" height="56" preserveAspectRatio="xMidYMid meet" />`
+    : `<text x="105" y="-22" text-anchor="middle" font-size="19" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.instructor_name)}</text>`;
 
-      <div className="relative flex h-full w-full flex-col px-2 py-2 sm:px-6 sm:py-6 lg:px-14 lg:py-10">
-        <div className="absolute right-2 top-2 rounded-2xl border border-lime-400/35 bg-black/45 px-2 py-1.5 backdrop-blur-sm sm:right-5 sm:top-5 sm:px-4 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <BadgeCheck className="h-5 w-5 text-lime-400 drop-shadow-[0_0_10px_rgba(168,255,0,0.7)] sm:h-8 sm:w-8" />
-            <div className="text-right">
-              <p className="text-[8px] uppercase tracking-[0.22em] text-white/75 sm:text-[11px] sm:tracking-[0.35em]">Certificado ID</p>
-              <p className="text-xs font-semibold tracking-wide sm:text-lg">{data.certificate_id}</p>
-            </div>
-          </div>
-        </div>
+  const adminSignature = data.admin_signature
+    ? `<image href="${data.admin_signature}" x="0" y="-62" width="210" height="56" preserveAspectRatio="xMidYMid meet" />`
+    : `<text x="105" y="-22" text-anchor="middle" font-size="19" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.admin_name)}</text>`;
 
-        <div className="absolute left-2 top-2 flex items-center gap-1.5 text-lime-400 sm:left-5 sm:top-5 sm:gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-lime-400/30 bg-black/35 shadow-[0_0_16px_rgba(168,255,0,0.12)] sm:h-16 sm:w-16">
-            <span className="text-sm font-black leading-none sm:text-xl">&lt;/&gt;</span>
-          </div>
-          <div>
-            <p className="text-base font-extrabold tracking-tight sm:text-4xl">
-              Sarria<span className="text-lime-400">Tech</span>
-            </p>
-            <p className="text-[8px] uppercase tracking-[0.2em] text-white/70 sm:text-sm sm:tracking-[0.35em]">Software Dev Academy</p>
-          </div>
-        </div>
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 1280" width="1480" height="1280">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="28%" r="92%">
+      <stop offset="0%" stop-color="#13201a"/>
+      <stop offset="60%" stop-color="#09110d"/>
+      <stop offset="100%" stop-color="#050807"/>
+    </radialGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#95b428"/>
+      <stop offset="100%" stop-color="#d5e2a1"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    <style>
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #e8ece8; letter-spacing: 0.08em; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #d5dbd7; letter-spacing: 0.12em; }
+    </style>
+  </defs>
 
-        <div className="flex flex-1 flex-col justify-center pt-8 sm:pt-14 lg:pt-20">
-          <div className="mx-auto w-full max-w-5xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-lime-400/25 bg-black/40 px-2.5 py-0.5 text-[6px] uppercase tracking-[0.12em] text-white/80 sm:px-4 sm:py-1.5 sm:text-[10px] sm:tracking-[0.3em]">
-              <span className="h-2 w-2 rounded-full bg-lime-400 shadow-[0_0_12px_rgba(168,255,0,0.9)]" />
-              Certificado
-            </div>
+  <rect x="0" y="0" width="1480" height="1280" rx="28" fill="url(#bg)"/>
+  <rect x="18" y="18" width="1444" height="1244" rx="24" fill="none" stroke="#a8b857" stroke-opacity="0.42" stroke-width="2"/>
+  <rect x="38" y="38" width="1404" height="1204" rx="22" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.4"/>
+  <rect x="58" y="58" width="1364" height="1164" rx="20" fill="none" stroke="#95b428" stroke-opacity="0.11" stroke-width="1.2" stroke-dasharray="8 10"/>
 
-            <h1 className="mt-2 text-[18px] font-black uppercase tracking-[0.05em] text-white sm:mt-3 sm:text-[48px] lg:text-[64px]">
-              Certificado
-            </h1>
-            <h2 className="mt-1 text-[18px] font-black uppercase tracking-[0.04em] text-lime-400 drop-shadow-[0_0_18px_rgba(168,255,0,0.55)] sm:text-[48px] lg:text-[64px]">
-              De Aprobación
-            </h2>
+  <g transform="translate(96 74)">
+    <text x="0" y="0" font-size="24" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" font-weight="900">&lt;/&gt;</text>
+    <text x="82" y="-2" font-size="42" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800">Sarria<tspan fill="#b8c961">Tech</tspan></text>
+    <text x="84" y="24" font-size="12" fill="#c9d0cb" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.26em">SOFTWARE DEV ACADEMY</text>
+  </g>
 
-            <p className="mt-2 text-[7px] font-medium uppercase tracking-[0.12em] text-white/75 sm:mt-6 sm:text-[11px] sm:tracking-[0.3em]">
-              Este certificado se otorga a:
-            </p>
-            <p
-              className={`${nameClass} mt-2 font-[cursive] italic leading-none text-white break-words text-balance drop-shadow-[0_0_14px_rgba(255,255,255,0.22)]`}
-              style={{ overflowWrap: 'anywhere' }}
-            >
-              {data.student_name}
-            </p>
+  <g transform="translate(1124 56)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="290" height="80" rx="18" fill="#0a120e" fill-opacity="0.84" stroke="#a8b857" stroke-opacity="0.42"/>
+    <text x="96" y="32" class="label" font-size="13">CERTIFICADO ID</text>
+    <text x="90" y="58" class="small" font-size="20" font-weight="700">${esc(data.certificate_id)}</text>
+    <circle cx="44" cy="40" r="15" fill="none" stroke="#b8c961" stroke-width="4"/>
+    <path d="M44 22 L44 58 M26 40 L62 40" stroke="#b8c961" stroke-width="4"/>
+  </g>
 
-            <div className="mx-auto mt-2 max-w-4xl rounded-[14px] border border-lime-400/40 bg-[#111111]/85 px-3 py-2 shadow-[0_0_40px_rgba(168,255,0,0.12)] backdrop-blur-sm sm:mt-6 sm:rounded-[22px] sm:px-6 sm:py-4">
-              <p className="text-[6px] uppercase tracking-[0.12em] text-white/70 sm:text-[10px] sm:tracking-[0.28em]">Por haber completado y aprobado el curso</p>
-              <h3 className={`${courseClass} mt-2 font-extrabold uppercase tracking-[0.05em] text-white`}>
-                {data.course_name}
-              </h3>
-              <p className="mx-auto mt-1 max-w-3xl text-[8px] leading-snug text-white/72 sm:mt-2 sm:text-[11px] sm:leading-relaxed">
-                {data.course_description}
-              </p>
-            </div>
+  <text x="740" y="214" text-anchor="middle" font-size="58" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="0.22em">CERTIFICADO</text>
+  <text x="740" y="282" text-anchor="middle" font-size="56" fill="url(#accent)" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="0.12em">DE APROBACIÓN</text>
 
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:mt-6 sm:grid-cols-3 sm:gap-3">
-              <div className="rounded-2xl border border-white/10 bg-black/35 px-2.5 py-2 text-left sm:px-4 sm:py-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <CalendarDays className="h-3 w-3 flex-shrink-0 text-lime-400 sm:h-4 sm:w-4" />
-                  <div className="min-w-0">
-                    <p className="text-[6px] uppercase tracking-[0.12em] text-white/60 sm:text-[10px] sm:tracking-[0.22em]">Fecha de finalización</p>
-                    <p className="mt-1 text-[9px] font-semibold sm:text-sm">{data.completion_date}</p>
-                  </div>
-                </div>
-              </div>
+  <rect x="454" y="346" width="572" height="36" rx="18" fill="#0b110d" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.12"/>
+  <text x="740" y="369" text-anchor="middle" font-size="11" fill="#ffffff" fill-opacity="0.84" letter-spacing="0.22em" font-family="Arial, Helvetica, sans-serif">ESTE CERTIFICADO SE OTORGA A</text>
 
-              <div className="rounded-2xl border border-white/10 bg-black/35 px-2.5 py-2 text-left sm:px-4 sm:py-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Clock3 className="h-3 w-3 flex-shrink-0 text-lime-400 sm:h-4 sm:w-4" />
-                  <div className="min-w-0">
-                    <p className="text-[6px] uppercase tracking-[0.12em] text-white/60 sm:text-[10px] sm:tracking-[0.22em]">Duración</p>
-                    <p className="mt-1 text-[9px] font-semibold sm:text-sm">{data.course_duration}</p>
-                  </div>
-                </div>
-              </div>
+  <text x="740" y="438" text-anchor="middle" font-size="${studentSize}" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="600">${esc(data.student_name)}</text>
+  <line x1="380" y1="470" x2="1100" y2="470" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.85"/>
 
-              <div className="rounded-2xl border border-white/10 bg-black/35 px-2.5 py-2 text-left sm:px-4 sm:py-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Gauge className="h-3 w-3 flex-shrink-0 text-lime-400 sm:h-4 sm:w-4" />
-                  <div className="min-w-0">
-                    <p className="text-[6px] uppercase tracking-[0.12em] text-white/60 sm:text-[10px] sm:tracking-[0.22em]">Nivel</p>
-                    <p className="mt-1 text-[9px] font-semibold sm:text-sm">{data.course_level}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <rect x="220" y="500" width="1040" height="92" rx="18" fill="#0a120e" fill-opacity="0.84" stroke="#a8b857" stroke-opacity="0.28"/>
+  <text x="740" y="526" text-anchor="middle" font-size="10.5" fill="#dfe5e0" fill-opacity="0.92" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.2em">POR HABER COMPLETADO Y APROBADO EL CURSO</text>
+  <text x="740" y="557" text-anchor="middle" font-size="${courseSize}" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.02em">${esc(data.course_name)}</text>
+  <text x="740" y="579" text-anchor="middle" font-size="10" fill="#cfd6d1" font-family="Arial, Helvetica, sans-serif">
+    ${courseLines.map((line, idx) => `<tspan x="740" dy="${idx === 0 ? 0 : 13}">${esc(line)}</tspan>`).join('')}
+  </text>
 
-            <div className="mt-3 grid grid-cols-1 gap-2 lg:mt-8 lg:grid-cols-[1fr_auto_1fr] lg:items-end">
-              <div className="flex justify-center lg:justify-start">{signatureBlock(data.instructor_signature, data.instructor_name, 'Instructor')}</div>
+  <g transform="translate(220 642)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="20" y="22" class="label" font-size="9.2">FECHA DE FINALIZACIÓN</text>
+    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.completion_date)}</text>
+  </g>
 
-              <div className="order-first flex justify-center lg:order-none">
-                <div className="relative flex h-18 w-18 items-center justify-center rounded-full border border-lime-400/50 bg-[radial-gradient(circle,rgba(168,255,0,0.16)_0%,rgba(0,0,0,0.92)_58%)] shadow-[0_0_40px_rgba(168,255,0,0.18)] sm:h-28 sm:w-28 lg:h-32 lg:w-32">
-                  <div className="absolute inset-2 rounded-full border border-lime-400/30 sm:inset-3" />
-                  <div className="absolute inset-0 rounded-full border border-lime-400/15" />
-                  <div className="absolute inset-3 rounded-full border border-lime-400/20 border-dashed sm:inset-5" />
-                  <div className="text-center">
-                    <Award className="mx-auto h-3.5 w-3.5 text-lime-400 drop-shadow-[0_0_10px_rgba(168,255,0,0.7)] sm:h-6 sm:w-6" />
-                    <p className="mt-1 text-[7px] font-semibold tracking-wide sm:mt-2 sm:text-xs">SarriaTech</p>
-                    <p className="text-[5px] uppercase tracking-[0.16em] text-white/65 sm:text-[9px] sm:tracking-[0.32em]">Academy</p>
-                  </div>
-                </div>
-              </div>
+  <g transform="translate(582 642)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="20" y="22" class="label" font-size="9.2">DURACIÓN</text>
+    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.course_duration)}</text>
+  </g>
 
-              <div className="flex justify-center lg:justify-end">{signatureBlock(data.admin_signature, data.admin_name, 'Administrador')}</div>
-            </div>
+  <g transform="translate(944 642)" filter="url(#softShadow)">
+    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
+    <text x="20" y="22" class="label" font-size="9.2">NIVEL</text>
+    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.course_level)}</text>
+  </g>
 
-            <div className="mt-3 flex flex-col items-center gap-2 sm:mt-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="max-w-2xl rounded-full border border-lime-400/20 bg-black/30 px-3 py-1.5 text-center text-[8px] text-white/80 shadow-[0_0_30px_rgba(168,255,0,0.08)] sm:px-6 sm:py-3 sm:text-sm">
-                SarriaTech impulsa tu futuro. Sigue aprendiendo, sigue creando.
-              </div>
+  <g transform="translate(176 1000)">
+    ${instructorSignature}
+    <line x1="18" y1="-14" x2="192" y2="-14" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.88"/>
+    <text x="105" y="2" text-anchor="middle" font-size="10.5" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.18em">INSTRUCTOR</text>
+  </g>
 
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-lime-400/40 bg-black/60 p-2 shadow-[0_0_24px_rgba(168,255,0,0.12)] sm:h-24 sm:w-24">
-                  <QrCode className="h-9 w-9 text-white/85 sm:h-16 sm:w-16" />
-                </div>
-                <p className="text-[6px] font-semibold uppercase tracking-[0.12em] text-white/70 sm:text-[10px] sm:tracking-[0.24em]">Verifica este certificado</p>
-              </div>
-            </div>
+  <g transform="translate(590 918)">
+    <circle cx="150" cy="36" r="52" fill="url(#accent)" fill-opacity="0.08" stroke="#a8b857" stroke-width="2"/>
+    <circle cx="150" cy="36" r="43" fill="#0a100d" stroke="#ffffff" stroke-opacity="0.08"/>
+    <text x="150" y="35" text-anchor="middle" font-size="13" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800">Sarria<tspan fill="#b8c961">Tech</tspan></text>
+    <text x="150" y="50" text-anchor="middle" font-size="8" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif" letter-spacing="2.2">ACADEMY</text>
+  </g>
 
-            {previewMode && (
-              <p className="mt-2 text-[6px] uppercase tracking-[0.14em] text-lime-400/80 sm:mt-3 sm:text-[10px] sm:tracking-[0.3em]">
-                Modo de prueba activado
-              </p>
-            )}
-          </div>
-        </div>
+  <g transform="translate(1056 1000)">
+    ${adminSignature}
+    <line x1="18" y1="-14" x2="192" y2="-14" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.88"/>
+    <text x="105" y="2" text-anchor="middle" font-size="10.5" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.18em">ADMINISTRADOR</text>
+  </g>
 
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center sm:bottom-4">
-          <div className="h-px w-[92%] bg-lime-400/25 shadow-[0_0_16px_rgba(168,255,0,0.35)]" />
-        </div>
+  <g transform="translate(1224 846)">
+    <rect x="0" y="0" width="100" height="100" rx="14" fill="#f7f7f7" stroke="#a8b857" stroke-width="4"/>
+    <rect x="10" y="10" width="20" height="20" fill="#111"/>
+    <rect x="13" y="13" width="13" height="13" fill="#f7f7f7"/>
+    <rect x="70" y="10" width="20" height="20" fill="#111"/>
+    <rect x="73" y="13" width="13" height="13" fill="#f7f7f7"/>
+    <rect x="10" y="70" width="20" height="20" fill="#111"/>
+    <rect x="13" y="73" width="13" height="13" fill="#f7f7f7"/>
+    <rect x="40" y="13" width="5" height="5" fill="#111"/>
+    <rect x="48" y="13" width="5" height="5" fill="#111"/>
+    <rect x="40" y="21" width="5" height="5" fill="#111"/>
+    <rect x="60" y="40" width="5" height="5" fill="#111"/>
+    <rect x="40" y="40" width="5" height="5" fill="#111"/>
+    <rect x="34" y="48" width="5" height="5" fill="#111"/>
+    <rect x="56" y="56" width="5" height="5" fill="#111"/>
+    <rect x="74" y="40" width="5" height="5" fill="#111"/>
+    <rect x="40" y="74" width="5" height="5" fill="#111"/>
+    <rect x="50" y="48" width="5" height="5" fill="#111"/>
+    <text x="50" y="126" text-anchor="middle" font-size="8.5" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif">VERIFICA ESTE CERTIFICADO</text>
+  </g>
 
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.28)_100%)]" />
-      </div>
-    </div>
-  );
+  <rect x="252" y="1140" width="976" height="26" rx="13" fill="#000000" fill-opacity="0.24" stroke="#a8b857" stroke-opacity="0.14"/>
+  <text x="740" y="1158" text-anchor="middle" font-size="12.5" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif">SarriaTech impulsa tu futuro. <tspan fill="#b8c961">Sigue aprendiendo, sigue creando.</tspan></text>
+</svg>`;
+}
+
+export function CertificateTemplate({ data }: CertificateTemplateProps) {
+  const svg = buildCertificateSvg(data);
+  const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  return <img src={src} alt="Certificado de aprobación" className="block h-auto w-full select-none object-contain" draggable={false} />;
 }
