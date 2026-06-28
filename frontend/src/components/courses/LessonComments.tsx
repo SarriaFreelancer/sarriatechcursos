@@ -8,6 +8,7 @@ type CommentUser = {
   id: number;
   name: string;
   email: string;
+  profilePicture?: string;
 };
 
 export type LessonComment = {
@@ -148,20 +149,29 @@ function CommentItem({
     <div className="space-y-3">
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-semibold text-sm">{comment.user.name}</p>
-            <p className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden">
+              {comment.user.profilePicture ? (
+                <img src={comment.user.profilePicture} alt={comment.user.name} className="w-full h-full object-cover" />
+              ) : (
+                comment.user.name.charAt(0).toUpperCase()
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm">{comment.user.name}</p>
+              <p className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={() => setActiveReplyId(isReplying ? null : comment.id)}
-            className="text-xs font-medium text-primary hover:underline"
+            className="text-xs font-medium text-primary hover:underline shrink-0"
           >
             Responder
           </button>
         </div>
 
-        <p className="mt-3 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+        <p className="mt-3 pl-13 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
           {comment.content}
         </p>
       </div>

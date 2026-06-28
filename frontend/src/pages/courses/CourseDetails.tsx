@@ -40,7 +40,7 @@ type CourseDetailsProps = {
     price: string | number;
     level: string;
     category?: { name: string };
-    instructor?: { name: string; email: string };
+    instructor?: { name: string; email: string; profilePicture?: string; };
     reviews: Review[];
     modules: Module[];
     averageRating: number;
@@ -113,7 +113,12 @@ export function CourseDetails({ course, onEnrollSuccess }: CourseDetailsProps) {
                 <span className="underline">({course.totalReviews} calificaciones)</span>
               </div>
               <span>·</span>
-              <span>Creado por <span className="text-blue-400 font-medium">{course.instructor?.name}</span></span>
+              <div className="flex items-center gap-2">
+                {course.instructor?.profilePicture && (
+                  <img src={course.instructor.profilePicture} alt={course.instructor.name} className="w-5 h-5 rounded-full object-cover"/>
+                )}
+                <span>Creado por <span className="text-blue-400 font-medium">{course.instructor?.name}</span></span>
+              </div>
               <span>·</span>
               <span>Nivel: {course.level === 'BEGINNER' ? 'Principiante' : course.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}</span>
             </div>

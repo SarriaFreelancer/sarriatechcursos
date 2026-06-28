@@ -39,134 +39,207 @@ function wrapText(text: string, maxChars: number) {
 }
 
 export function buildCertificateSvg(data: CertificateData) {
-  const studentSize = data.student_name.length > 24 ? 19 : 25;
-  const courseSize = data.course_name.length > 28 ? 14 : 18;
+  const studentSize = data.student_name.length > 24 ? 65 : 90;
+  const courseSize = data.course_name.length > 28 ? 32 : 42;
   const courseLines = wrapText(data.course_description, 58);
 
   const instructorSignature = data.instructor_signature
     ? `<image href="${data.instructor_signature}" x="0" y="-62" width="210" height="56" preserveAspectRatio="xMidYMid meet" />`
-    : `<text x="105" y="-22" text-anchor="middle" font-size="19" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.instructor_name)}</text>`;
+    : `<text x="105" y="-22" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.instructor_name)}</text>`;
 
   const adminSignature = data.admin_signature
     ? `<image href="${data.admin_signature}" x="0" y="-62" width="210" height="56" preserveAspectRatio="xMidYMid meet" />`
-    : `<text x="105" y="-22" text-anchor="middle" font-size="19" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.admin_name)}</text>`;
+    : `<text x="105" y="-22" text-anchor="middle" font-size="28" fill="#ffffff" font-family="'Playfair Display', Georgia, 'Times New Roman', serif" font-style="italic">${esc(data.admin_name)}</text>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 1280" width="1480" height="1280">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="28%" r="92%">
-      <stop offset="0%" stop-color="#13201a"/>
-      <stop offset="60%" stop-color="#09110d"/>
-      <stop offset="100%" stop-color="#050807"/>
+    <!-- Dark Emerald Premium Background -->
+    <radialGradient id="bg" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#092415"/>
+      <stop offset="50%" stop-color="#05140b"/>
+      <stop offset="100%" stop-color="#020804"/>
     </radialGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#95b428"/>
-      <stop offset="100%" stop-color="#d5e2a1"/>
+    
+    <!-- Metallic Gold Gradient -->
+    <linearGradient id="gold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#AA771C"/>
+      <stop offset="30%" stop-color="#D4AF37"/>
+      <stop offset="50%" stop-color="#F3E5AB"/>
+      <stop offset="70%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#8A5A19"/>
     </linearGradient>
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.3"/>
+
+    <!-- Glow Effect for Gold Elements -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
+
+    <!-- Drop Shadow -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Subtle Watermark Pattern -->
+    <pattern id="watermark" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M60 0 L120 60 L60 120 L0 60 Z" fill="none" stroke="#ffffff" stroke-opacity="0.02" stroke-width="1.5"/>
+      <path d="M60 20 L100 60 L60 100 L20 60 Z" fill="none" stroke="#ffffff" stroke-opacity="0.015" stroke-width="1"/>
+      <path d="M 10 10 L 110 110 M 110 10 L 10 110" fill="none" stroke="#ffffff" stroke-opacity="0.01" stroke-width="1"/>
+      <circle cx="60" cy="60" r="4" fill="#ffffff" fill-opacity="0.015"/>
+    </pattern>
+
     <style>
-      .small { font-family: Arial, Helvetica, sans-serif; fill: #e8ece8; letter-spacing: 0.08em; }
-      .label { font-family: Arial, Helvetica, sans-serif; fill: #d5dbd7; letter-spacing: 0.12em; }
+      .title { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-weight: 700; }
+      .sans { font-family: 'Montserrat', Arial, Helvetica, sans-serif; }
+      .value { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-weight: 700; }
     </style>
   </defs>
 
-  <rect x="0" y="0" width="1480" height="1280" rx="28" fill="url(#bg)"/>
-  <rect x="18" y="18" width="1444" height="1244" rx="24" fill="none" stroke="#a8b857" stroke-opacity="0.42" stroke-width="2"/>
-  <rect x="38" y="38" width="1404" height="1204" rx="22" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.4"/>
-  <rect x="58" y="58" width="1364" height="1164" rx="20" fill="none" stroke="#95b428" stroke-opacity="0.11" stroke-width="1.2" stroke-dasharray="8 10"/>
+  <!-- Backgrounds -->
+  <rect x="0" y="0" width="1480" height="1280" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1480" height="1280" fill="url(#watermark)"/>
 
-  <g transform="translate(96 74)">
-    <text x="0" y="0" font-size="24" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" font-weight="900">&lt;/&gt;</text>
-    <text x="82" y="-2" font-size="42" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800">Sarria<tspan fill="#b8c961">Tech</tspan></text>
-    <text x="84" y="24" font-size="12" fill="#c9d0cb" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.26em">SOFTWARE DEV ACADEMY</text>
+  <!-- Elegant Gold Borders -->
+  <rect x="30" y="30" width="1420" height="1220" fill="none" stroke="url(#gold)" stroke-opacity="0.9" stroke-width="2"/>
+  <rect x="40" y="40" width="1400" height="1200" fill="none" stroke="url(#gold)" stroke-opacity="0.4" stroke-width="1"/>
+  
+  <rect x="60" y="60" width="1360" height="1160" fill="none" stroke="url(#gold)" stroke-width="5" filter="url(#goldGlow)"/>
+  <rect x="70" y="70" width="1340" height="1140" fill="none" stroke="url(#gold)" stroke-opacity="0.7" stroke-width="1"/>
+
+  <!-- Corner Ornaments -->
+  <!-- Top Left -->
+  <path d="M 60 120 L 120 60" stroke="url(#gold)" stroke-width="2" filter="url(#goldGlow)"/>
+  <path d="M 60 140 L 140 60" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.6"/>
+  <!-- Top Right -->
+  <path d="M 1420 120 L 1360 60" stroke="url(#gold)" stroke-width="2" filter="url(#goldGlow)"/>
+  <path d="M 1420 140 L 1340 60" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.6"/>
+  <!-- Bottom Left -->
+  <path d="M 60 1160 L 120 1220" stroke="url(#gold)" stroke-width="2" filter="url(#goldGlow)"/>
+  <path d="M 60 1140 L 140 1220" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.6"/>
+  <!-- Bottom Right -->
+  <path d="M 1420 1160 L 1360 1220" stroke="url(#gold)" stroke-width="2" filter="url(#goldGlow)"/>
+  <path d="M 1420 1140 L 1340 1220" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.6"/>
+
+  <!-- Logo and Glowing Dot -->
+  <g transform="translate(100 120)">
+    <!-- Small bright green dot -->
+    <circle cx="20" cy="-12" r="6" fill="#00ff66" filter="url(#goldGlow)"/>
+    <circle cx="20" cy="-12" r="3" fill="#ffffff"/>
+    
+    <text x="38" y="0" font-size="44" fill="#ffffff" class="title">Sarria<tspan fill="url(#gold)">Tech</tspan></text>
+    <text x="42" y="24" font-size="12" fill="url(#gold)" class="sans" letter-spacing="0.35em" font-weight="600">SOFTWARE DEV ACADEMY</text>
   </g>
 
-  <g transform="translate(1124 56)" filter="url(#softShadow)">
-    <rect x="0" y="0" width="290" height="80" rx="18" fill="#0a120e" fill-opacity="0.84" stroke="#a8b857" stroke-opacity="0.42"/>
-    <text x="96" y="32" class="label" font-size="13">CERTIFICADO ID</text>
-    <text x="90" y="58" class="small" font-size="20" font-weight="700">${esc(data.certificate_id)}</text>
-    <circle cx="44" cy="40" r="15" fill="none" stroke="#b8c961" stroke-width="4"/>
-    <path d="M44 22 L44 58 M26 40 L62 40" stroke="#b8c961" stroke-width="4"/>
+  <!-- Elegant Rocket Illustration (Top Center) -->
+  <g transform="translate(740 130) scale(1.6) rotate(15)" filter="url(#goldGlow)">
+    <path d="M0 -20 Q 8 -10 8 5 Q 8 15 3 20 L -3 20 Q -8 15 -8 5 Q -8 -10 0 -20 Z" stroke="url(#gold)" fill="none" stroke-width="1.5" />
+    <path d="M-8 5 Q -14 12 -12 18 L -3 15" stroke="url(#gold)" fill="none" stroke-width="1.5" />
+    <path d="M8 5 Q 14 12 12 18 L 3 15" stroke="url(#gold)" fill="none" stroke-width="1.5" />
+    <circle cx="0" cy="-2" r="2.5" stroke="url(#gold)" fill="none" stroke-width="1" />
+    <path d="M-3 20 L -5 26 L 0 24 L 5 26 L 3 20" stroke="url(#gold)" fill="none" stroke-width="1" />
   </g>
 
-  <text x="740" y="214" text-anchor="middle" font-size="58" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="0.22em">CERTIFICADO</text>
-  <text x="740" y="282" text-anchor="middle" font-size="56" fill="url(#accent)" font-family="Georgia, 'Times New Roman', serif" font-weight="700" letter-spacing="0.12em">DE APROBACIÓN</text>
+  <!-- Certificate ID Badge -->
+  <g transform="translate(1100 90)" filter="url(#dropShadow)">
+    <rect x="0" y="0" width="280" height="70" rx="0" fill="#020804" stroke="url(#gold)" stroke-width="1.5"/>
+    <text x="96" y="28" class="sans" fill="url(#gold)" letter-spacing="0.2em" font-size="11" font-weight="600">CERTIFICADO ID</text>
+    <text x="96" y="52" class="sans" font-size="16" font-weight="700" fill="#ffffff" letter-spacing="0.05em">${esc(data.certificate_id)}</text>
+    <circle cx="44" cy="35" r="16" fill="none" stroke="url(#gold)" stroke-width="1.5"/>
+    <circle cx="44" cy="35" r="12" fill="none" stroke="url(#gold)" stroke-width="0.5"/>
+    <path d="M44 23 L44 47 M32 35 L56 35" stroke="url(#gold)" stroke-width="1.5"/>
+  </g>
 
-  <rect x="454" y="346" width="572" height="36" rx="18" fill="#0b110d" fill-opacity="0.5" stroke="#ffffff" stroke-opacity="0.12"/>
-  <text x="740" y="369" text-anchor="middle" font-size="11" fill="#ffffff" fill-opacity="0.84" letter-spacing="0.22em" font-family="Arial, Helvetica, sans-serif">ESTE CERTIFICADO SE OTORGA A</text>
+  <!-- Main Title -->
+  <text x="740" y="270" text-anchor="middle" font-size="76" fill="#ffffff" class="title" letter-spacing="0.25em">CERTIFICADO</text>
+  <text x="740" y="340" text-anchor="middle" font-size="68" fill="url(#gold)" class="title" letter-spacing="0.15em" filter="url(#goldGlow)">DE APROBACIÓN</text>
 
-  <text x="740" y="438" text-anchor="middle" font-size="${studentSize}" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="600">${esc(data.student_name)}</text>
-  <line x1="380" y1="470" x2="1100" y2="470" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.85"/>
+  <!-- Subtitle -->
+  <rect x="490" y="400" width="500" height="30" rx="15" fill="none" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="740" y="420" text-anchor="middle" font-size="11" fill="url(#gold)" letter-spacing="0.25em" class="sans" font-weight="600">SE OTORGA ORGULLOSAMENTE A</text>
 
-  <rect x="220" y="500" width="1040" height="92" rx="18" fill="#0a120e" fill-opacity="0.84" stroke="#a8b857" stroke-opacity="0.28"/>
-  <text x="740" y="526" text-anchor="middle" font-size="10.5" fill="#dfe5e0" fill-opacity="0.92" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.2em">POR HABER COMPLETADO Y APROBADO EL CURSO</text>
-  <text x="740" y="557" text-anchor="middle" font-size="${courseSize}" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800" letter-spacing="0.02em">${esc(data.course_name)}</text>
-  <text x="740" y="579" text-anchor="middle" font-size="10" fill="#cfd6d1" font-family="Arial, Helvetica, sans-serif">
-    ${courseLines.map((line, idx) => `<tspan x="740" dy="${idx === 0 ? 0 : 13}">${esc(line)}</tspan>`).join('')}
+  <!-- Student Name -->
+  <text x="740" y="520" text-anchor="middle" font-size="${studentSize}" fill="#ffffff" class="title" font-style="italic" filter="url(#dropShadow)">${esc(data.student_name)}</text>
+  
+  <line x1="340" y1="560" x2="1140" y2="560" stroke="url(#gold)" stroke-width="2" filter="url(#goldGlow)"/>
+  <path d="M730 560 L740 550 L750 560 L740 570 Z" fill="url(#gold)" filter="url(#goldGlow)"/>
+
+  <!-- Course Info -->
+  <text x="740" y="620" text-anchor="middle" font-size="13" fill="#a0b3a8" class="sans" letter-spacing="0.25em">POR HABER COMPLETADO SATISFACTORIAMENTE EL CURSO</text>
+  <text x="740" y="670" text-anchor="middle" font-size="${courseSize}" fill="url(#gold)" class="title" letter-spacing="0.05em" filter="url(#goldGlow)">${esc(data.course_name)}</text>
+  
+  <text x="740" y="720" text-anchor="middle" font-size="15" fill="#ffffff" class="sans" font-weight="300">
+    ${courseLines.map((line, idx) => `<tspan x="740" dy="${idx === 0 ? 0 : 26}">${esc(line)}</tspan>`).join('')}
   </text>
 
-  <g transform="translate(220 642)" filter="url(#softShadow)">
-    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="20" y="22" class="label" font-size="9.2">FECHA DE FINALIZACIÓN</text>
-    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.completion_date)}</text>
+  <!-- Stats Grid -->
+  <g transform="translate(220 820)" filter="url(#dropShadow)">
+    <rect x="0" y="0" width="316" height="80" rx="0" fill="#020804" fill-opacity="0.6" stroke="url(#gold)" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="158" y="30" text-anchor="middle" class="sans" font-size="11" fill="url(#gold)" letter-spacing="0.2em" font-weight="600">FECHA DE FINALIZACIÓN</text>
+    <text x="158" y="60" text-anchor="middle" font-size="20" fill="#ffffff" class="value">${esc(data.completion_date)}</text>
   </g>
 
-  <g transform="translate(582 642)" filter="url(#softShadow)">
-    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="20" y="22" class="label" font-size="9.2">DURACIÓN</text>
-    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.course_duration)}</text>
+  <g transform="translate(582 820)" filter="url(#dropShadow)">
+    <rect x="0" y="0" width="316" height="80" rx="0" fill="#020804" fill-opacity="0.6" stroke="url(#gold)" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="158" y="30" text-anchor="middle" class="sans" font-size="11" fill="url(#gold)" letter-spacing="0.2em" font-weight="600">DURACIÓN</text>
+    <text x="158" y="60" text-anchor="middle" font-size="20" fill="#ffffff" class="value">${esc(data.course_duration)}</text>
   </g>
 
-  <g transform="translate(944 642)" filter="url(#softShadow)">
-    <rect x="0" y="0" width="316" height="72" rx="15" fill="#09100d" fill-opacity="0.72" stroke="#ffffff" stroke-opacity="0.1"/>
-    <text x="20" y="22" class="label" font-size="9.2">NIVEL</text>
-    <text x="20" y="48" font-size="15" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="700">${esc(data.course_level)}</text>
+  <g transform="translate(944 820)" filter="url(#dropShadow)">
+    <rect x="0" y="0" width="316" height="80" rx="0" fill="#020804" fill-opacity="0.6" stroke="url(#gold)" stroke-opacity="0.5" stroke-width="1"/>
+    <text x="158" y="30" text-anchor="middle" class="sans" font-size="11" fill="url(#gold)" letter-spacing="0.2em" font-weight="600">NIVEL</text>
+    <text x="158" y="60" text-anchor="middle" font-size="20" fill="#ffffff" class="value">${esc(data.course_level)}</text>
   </g>
 
-  <g transform="translate(176 1000)">
+  <!-- Signatures and Seals -->
+  <g transform="translate(176 1060)">
     ${instructorSignature}
-    <line x1="18" y1="-14" x2="192" y2="-14" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.88"/>
-    <text x="105" y="2" text-anchor="middle" font-size="10.5" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.18em">INSTRUCTOR</text>
+    <line x1="0" y1="-10" x2="210" y2="-10" stroke="url(#gold)" stroke-width="1.5" stroke-dasharray="4 2"/>
+    <text x="105" y="10" text-anchor="middle" font-size="12" fill="url(#gold)" class="sans" letter-spacing="0.2em" font-weight="600">INSTRUCTOR</text>
   </g>
 
-  <g transform="translate(590 918)">
-    <circle cx="150" cy="36" r="52" fill="url(#accent)" fill-opacity="0.08" stroke="#a8b857" stroke-width="2"/>
-    <circle cx="150" cy="36" r="43" fill="#0a100d" stroke="#ffffff" stroke-opacity="0.08"/>
-    <text x="150" y="35" text-anchor="middle" font-size="13" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-weight="800">Sarria<tspan fill="#b8c961">Tech</tspan></text>
-    <text x="150" y="50" text-anchor="middle" font-size="8" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif" letter-spacing="2.2">ACADEMY</text>
+  <g transform="translate(590 980)">
+    <!-- Premium Seal -->
+    <circle cx="150" cy="50" r="75" fill="url(#bg)" stroke="url(#gold)" stroke-width="3" filter="url(#dropShadow)"/>
+    <circle cx="150" cy="50" r="65" fill="none" stroke="url(#gold)" stroke-dasharray="3 3" stroke-width="1.5"/>
+    <circle cx="150" cy="50" r="58" fill="none" stroke="url(#gold)" stroke-width="1" stroke-opacity="0.5"/>
+    <!-- Center text -->
+    <text x="150" y="48" text-anchor="middle" font-size="20" fill="#ffffff" class="title">Sarria<tspan fill="url(#gold)">Tech</tspan></text>
+    <text x="150" y="68" text-anchor="middle" font-size="10" fill="url(#gold)" class="sans" letter-spacing="0.25em" font-weight="600">EXCELLENCE</text>
+    <!-- Little star/diamond -->
+    <path d="M 150 15 L 153 23 L 161 26 L 153 29 L 150 37 L 147 29 L 139 26 L 147 23 Z" fill="url(#gold)" filter="url(#goldGlow)"/>
   </g>
 
-  <g transform="translate(1056 1000)">
+  <g transform="translate(1056 1060)">
     ${adminSignature}
-    <line x1="18" y1="-14" x2="192" y2="-14" stroke="#b8c961" stroke-width="1.5" stroke-opacity="0.88"/>
-    <text x="105" y="2" text-anchor="middle" font-size="10.5" fill="#b8c961" font-family="Arial, Helvetica, sans-serif" letter-spacing="0.18em">ADMINISTRADOR</text>
+    <line x1="0" y1="-10" x2="210" y2="-10" stroke="url(#gold)" stroke-width="1.5" stroke-dasharray="4 2"/>
+    <text x="105" y="10" text-anchor="middle" font-size="12" fill="url(#gold)" class="sans" letter-spacing="0.2em" font-weight="600">ADMINISTRADOR</text>
   </g>
 
-  <g transform="translate(1224 846)">
-    <rect x="0" y="0" width="100" height="100" rx="14" fill="#f7f7f7" stroke="#a8b857" stroke-width="4"/>
-    <rect x="10" y="10" width="20" height="20" fill="#111"/>
-    <rect x="13" y="13" width="13" height="13" fill="#f7f7f7"/>
-    <rect x="70" y="10" width="20" height="20" fill="#111"/>
-    <rect x="73" y="13" width="13" height="13" fill="#f7f7f7"/>
-    <rect x="10" y="70" width="20" height="20" fill="#111"/>
-    <rect x="13" y="73" width="13" height="13" fill="#f7f7f7"/>
-    <rect x="40" y="13" width="5" height="5" fill="#111"/>
-    <rect x="48" y="13" width="5" height="5" fill="#111"/>
-    <rect x="40" y="21" width="5" height="5" fill="#111"/>
-    <rect x="60" y="40" width="5" height="5" fill="#111"/>
-    <rect x="40" y="40" width="5" height="5" fill="#111"/>
-    <rect x="34" y="48" width="5" height="5" fill="#111"/>
-    <rect x="56" y="56" width="5" height="5" fill="#111"/>
-    <rect x="74" y="40" width="5" height="5" fill="#111"/>
-    <rect x="40" y="74" width="5" height="5" fill="#111"/>
-    <rect x="50" y="48" width="5" height="5" fill="#111"/>
-    <text x="50" y="126" text-anchor="middle" font-size="8.5" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif">VERIFICA ESTE CERTIFICADO</text>
+  <!-- QR Code / Verify area -->
+  <g transform="translate(1224 1050)" filter="url(#dropShadow)">
+    <rect x="0" y="0" width="100" height="100" fill="#ffffff" stroke="url(#gold)" stroke-width="3"/>
+    <rect x="10" y="10" width="20" height="20" fill="#05140b"/>
+    <rect x="13" y="13" width="13" height="13" fill="#ffffff"/>
+    <rect x="70" y="10" width="20" height="20" fill="#05140b"/>
+    <rect x="73" y="13" width="13" height="13" fill="#ffffff"/>
+    <rect x="10" y="70" width="20" height="20" fill="#05140b"/>
+    <rect x="13" y="73" width="13" height="13" fill="#ffffff"/>
+    <rect x="40" y="13" width="5" height="5" fill="#05140b"/>
+    <rect x="48" y="13" width="5" height="5" fill="#05140b"/>
+    <rect x="40" y="21" width="5" height="5" fill="#05140b"/>
+    <rect x="60" y="40" width="5" height="5" fill="#05140b"/>
+    <rect x="40" y="40" width="5" height="5" fill="#05140b"/>
+    <rect x="34" y="48" width="5" height="5" fill="#05140b"/>
+    <rect x="56" y="56" width="5" height="5" fill="#05140b"/>
+    <rect x="74" y="40" width="5" height="5" fill="#05140b"/>
+    <rect x="40" y="74" width="5" height="5" fill="#05140b"/>
+    <rect x="50" y="48" width="5" height="5" fill="#05140b"/>
+    <text x="50" y="120" text-anchor="middle" font-size="10" fill="url(#gold)" class="sans" font-weight="700" letter-spacing="0.1em">VERIFICAR</text>
   </g>
 
-  <rect x="252" y="1140" width="976" height="26" rx="13" fill="#000000" fill-opacity="0.24" stroke="#a8b857" stroke-opacity="0.14"/>
-  <text x="740" y="1158" text-anchor="middle" font-size="12.5" fill="#d7ddd8" font-family="Arial, Helvetica, sans-serif">SarriaTech impulsa tu futuro. <tspan fill="#b8c961">Sigue aprendiendo, sigue creando.</tspan></text>
+  <!-- Footer text -->
+  <text x="740" y="1220" text-anchor="middle" font-size="12" fill="#a0b3a8" class="sans" letter-spacing="0.3em">SARRIATECH IMPULSA TU FUTURO <tspan fill="url(#gold)">·</tspan> SIGUE APRENDIENDO, SIGUE CREANDO</text>
 </svg>`;
 }
 

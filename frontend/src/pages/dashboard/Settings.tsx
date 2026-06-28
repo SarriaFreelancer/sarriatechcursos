@@ -1,204 +1,109 @@
-import { useState } from 'react';
-import { Save, User, Key, CheckCircle, AlertCircle } from 'lucide-react';
-import { useAuthStore } from '../../store/useAuthStore';
-import api from '../../lib/axios';
+import { useState, useEffect } from 'react';
+import { Palette, Bell, UserCheck, Moon, Sun } from 'lucide-react';
+
+type Theme = 'light' | 'dark' | 'system';
 
 export function Settings() {
-  const { user, updateUser } = useAuthStore();
+  // State for settings - initialize from localStorage or defaults
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'system');
+  const [emailNotifications, setEmailNotifications] = useState(() => localStorage.getItem('emailNotifications') === 'true');
+  const [privacy, setPrivacy] = useState(() => localStorage.getItem('privacy') === 'true');
 
-  // Profile Form State
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileError, setProfileError] = useState('');
-  const [profileSuccess, setProfileSuccess] = useState('');
-
-  // Password Form State
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordSaving, setPasswordSaving] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileSaving(true);
-    setProfileError('');
-    setProfileSuccess('');
-
-    try {
-      const response = await api.put('/auth/profile', { name, email });
-      // Update store
-      updateUser({
-        id: response.data.id,
-        name: response.data.name,
-        email: response.data.email,
-        roleId: response.data.roleId,
-        roleName: response.data.roleName,
-      });
-      setProfileSuccess('Información personal actualizada con éxito.');
-    } catch (err: any) {
-      setProfileError(err.response?.data?.error || 'Error al actualizar la información.');
-    } finally {
-      setProfileSaving(false);
+  // Effect to apply theme and save settings to localStorage
+  useEffect(() => {
+    // Theme logic
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
+    localStorage.setItem('theme', theme);
+
+    // Save other settings
+    localStorage.setItem('emailNotifications', String(emailNotifications));
+    localStorage.setItem('privacy', String(privacy));
+  }, [theme, emailNotifications, privacy]);
+
+  const handleThemeChange = (selectedTheme: Theme) => {
+    setTheme(selectedTheme);
   };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordSaving(true);
-    setPasswordError('');
-    setPasswordSuccess('');
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Las contraseñas nuevas no coinciden.');
-      setPasswordSaving(false);
-      return;
-    }
-
-    try {
-      await api.put('/auth/password', { currentPassword, newPassword });
-      setPasswordSuccess('Contraseña actualizada con éxito.');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (err: any) {
-      setPasswordError(err.response?.data?.error || 'Error al actualizar la contraseña.');
-    } finally {
-      setPasswordSaving(false);
-    }
-  };
-
+  
   return (
     <div className="max-w-2xl space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Ajustes de Perfil</h1>
-        <p className="text-sm text-muted-foreground mt-1">Gestiona tu información personal y la seguridad de tu cuenta.</p>
+        <h1 className="text-3xl font-extrabold tracking-tight">Ajustes</h1>
+        <p className="text-sm text-muted-foreground mt-1">Personaliza la apariencia y el comportamiento de la plataforma.</p>
       </div>
 
-      {/* Personal Info Form */}
+      {/* Appearance Settings */}
       <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
         <h2 className="text-xl font-bold border-b border-border pb-3 flex items-center gap-2">
-          <User className="w-5 h-5 text-primary" /> Información Personal
+          <Palette className="w-5 h-5 text-primary" /> Apariencia
         </h2>
-
-        {profileSuccess && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 rounded-xl p-3.5 text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0" />
-            {profileSuccess}
+        <div className="space-y-1.5">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Tema</label>
+          <p className="text-sm text-muted-foreground mb-3">Selecciona cómo te gustaría que se viera la plataforma.</p>
+          <div className="grid grid-cols-3 gap-3">
+            <button 
+              onClick={() => handleThemeChange('light')}
+              className={`text-center p-4 rounded-xl border-2 transition-all ${theme === 'light' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+              <Sun className="mx-auto mb-2 w-5 h-5"/>
+              <span className="text-sm font-semibold">Claro</span>
+            </button>
+            <button 
+              onClick={() => handleThemeChange('dark')}
+              className={`text-center p-4 rounded-xl border-2 transition-all ${theme === 'dark' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+              <Moon className="mx-auto mb-2 w-5 h-5"/>
+              <span className="text-sm font-semibold">Oscuro</span>
+            </button>
+            <button 
+              onClick={() => handleThemeChange('system')}
+              className={`text-center p-4 rounded-xl border-2 transition-all ${theme === 'system' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
+              <Palette className="mx-auto mb-2 w-5 h-5"/>
+              <span className="text-sm font-semibold">Sistema</span>
+            </button>
           </div>
-        )}
-
-        {profileError && (
-          <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-xl p-3.5 text-sm font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {profileError}
-          </div>
-        )}
-
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre Completo</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full bg-secondary border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Correo Electrónico</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-secondary border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={profileSaving}
-            className="bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-primary/95 transition-all text-xs sm:text-sm disabled:opacity-50"
-          >
-            {profileSaving ? (
-              <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Guardar Cambios
-          </button>
-        </form>
+        </div>
       </div>
 
-      {/* Security Form */}
+      {/* Notification Settings */}
       <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
         <h2 className="text-xl font-bold border-b border-border pb-3 flex items-center gap-2">
-          <Key className="w-5 h-5 text-primary" /> Seguridad
+          <Bell className="w-5 h-5 text-primary" /> Notificaciones
         </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="font-semibold" htmlFor="email-notifications">Notificaciones por correo</label>
+            <p className="text-sm text-muted-foreground">Recibir un correo cuando haya actualizaciones importantes.</p>
+          </div>
+          <label htmlFor="email-notifications" className="flex items-center cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" id="email-notifications" className="sr-only" checked={emailNotifications} onChange={() => setEmailNotifications(!emailNotifications)} />
+              <div className={`block w-12 h-6 rounded-full transition-all ${emailNotifications ? 'bg-primary' : 'bg-secondary'}`}></div>
+              <div className={`dot absolute left-1 top-1 bg-card w-4 h-4 rounded-full transition-all ${emailNotifications ? 'translate-x-6' : ''}`}></div>
+            </div>
+          </label>
+        </div>
+      </div>
 
-        {passwordSuccess && (
-          <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 rounded-xl p-3.5 text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0" />
-            {passwordSuccess}
+      {/* Privacy Settings */}
+      <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+        <h2 className="text-xl font-bold border-b border-border pb-3 flex items-center gap-2">
+          <UserCheck className="w-5 h-5 text-primary" /> Privacidad
+        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <label className="font-semibold" htmlFor="privacy-setting">Perfil público</label>
+            <p className="text-sm text-muted-foreground">Permitir que otros usuarios vean tu perfil y progreso.</p>
           </div>
-        )}
-
-        {passwordError && (
-          <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-xl p-3.5 text-sm font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            {passwordError}
-          </div>
-        )}
-
-        <form onSubmit={handleUpdatePassword} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Contraseña Actual</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="w-full bg-secondary border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Nueva Contraseña</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full bg-secondary border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Confirmar Nueva Contraseña</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full bg-secondary border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/45 text-foreground"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={passwordSaving}
-            className="bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-xl flex items-center gap-2 hover:bg-primary/95 transition-all text-xs sm:text-sm disabled:opacity-50"
-          >
-            {passwordSaving ? (
-              <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Actualizar Contraseña
-          </button>
-        </form>
+          <label htmlFor="privacy-setting" className="flex items-center cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" id="privacy-setting" className="sr-only" checked={privacy} onChange={() => setPrivacy(!privacy)} />
+              <div className={`block w-12 h-6 rounded-full transition-all ${privacy ? 'bg-primary' : 'bg-secondary'}`}></div>
+              <div className={`dot absolute left-1 top-1 bg-card w-4 h-4 rounded-full transition-all ${privacy ? 'translate-x-6' : ''}`}></div>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
   );
