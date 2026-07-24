@@ -39,8 +39,8 @@ function wrapText(text: string, maxChars: number) {
 }
 
 export function buildCertificateSvg(data: CertificateData) {
-  const studentSize = data.student_name.length > 24 ? 65 : 90;
-  const courseSize = data.course_name.length > 28 ? 32 : 42;
+  const studentSize = data.student_name.length > 24 ? 55 : 75;
+  const courseSize = data.course_name.length > 28 ? 40 : 56;
   const courseLines = wrapText(data.course_description, 58);
 
   const instructorSignature = data.instructor_signature
@@ -217,26 +217,7 @@ export function buildCertificateSvg(data: CertificateData) {
   </g>
 
   <!-- QR Code / Verify area -->
-  <g transform="translate(1224 1050)" filter="url(#dropShadow)">
-    <rect x="0" y="0" width="100" height="100" fill="#ffffff" stroke="url(#gold)" stroke-width="3"/>
-    <rect x="10" y="10" width="20" height="20" fill="#05140b"/>
-    <rect x="13" y="13" width="13" height="13" fill="#ffffff"/>
-    <rect x="70" y="10" width="20" height="20" fill="#05140b"/>
-    <rect x="73" y="13" width="13" height="13" fill="#ffffff"/>
-    <rect x="10" y="70" width="20" height="20" fill="#05140b"/>
-    <rect x="13" y="73" width="13" height="13" fill="#ffffff"/>
-    <rect x="40" y="13" width="5" height="5" fill="#05140b"/>
-    <rect x="48" y="13" width="5" height="5" fill="#05140b"/>
-    <rect x="40" y="21" width="5" height="5" fill="#05140b"/>
-    <rect x="60" y="40" width="5" height="5" fill="#05140b"/>
-    <rect x="40" y="40" width="5" height="5" fill="#05140b"/>
-    <rect x="34" y="48" width="5" height="5" fill="#05140b"/>
-    <rect x="56" y="56" width="5" height="5" fill="#05140b"/>
-    <rect x="74" y="40" width="5" height="5" fill="#05140b"/>
-    <rect x="40" y="74" width="5" height="5" fill="#05140b"/>
-    <rect x="50" y="48" width="5" height="5" fill="#05140b"/>
-    <text x="50" y="120" text-anchor="middle" font-size="10" fill="url(#gold)" class="sans" font-weight="700" letter-spacing="0.1em">VERIFICAR</text>
-  </g>
+  
 
   <!-- Footer text -->
   <text x="740" y="1220" text-anchor="middle" font-size="12" fill="#a0b3a8" class="sans" letter-spacing="0.3em">SARRIATECH IMPULSA TU FUTURO <tspan fill="url(#gold)">·</tspan> SIGUE APRENDIENDO, SIGUE CREANDO</text>

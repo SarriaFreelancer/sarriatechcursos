@@ -154,10 +154,10 @@ export function Profile() {
       const uploadResponse = await api.post('/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const { secure_url } = uploadResponse.data;
+      const imageUrl = uploadResponse.data.url || uploadResponse.data.secure_url;
 
       // Step 2: Update profile with the new image URL
-      const profileResponse = await api.put('/auth/profile', { profilePicture: secure_url });
+      const profileResponse = await api.put('/auth/profile', { profilePicture: imageUrl });
       updateUser({ profilePicture: profileResponse.data.profilePicture });
       setProfileSuccess('Foto de perfil actualizada.');
 

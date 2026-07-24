@@ -5,6 +5,9 @@ export interface User {
   roleId: number;
   roleName: string;
   profilePicture?: string;
+  theme?: string;
+  emailNotifications?: boolean;
+  isPrivate?: boolean;
 }
 
 export interface AuthResponse {

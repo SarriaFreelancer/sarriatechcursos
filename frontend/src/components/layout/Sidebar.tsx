@@ -54,7 +54,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:w-64",
+          "fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:w-64",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -104,10 +104,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Link>
           </div>
         )}
-
-        <div className="p-4 border-t border-border">
-          <p className="text-xs text-muted-foreground text-center">© 2026 SarriaTech</p>
-        </div>
       </aside>
     </>
   );

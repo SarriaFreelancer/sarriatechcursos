@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown, GraduationCap, ShieldCheck, Image as ImageIcon, FileText } from 'lucide-react';
-import { CertificateTemplate, buildCertificateSvg, type CertificateData } from '../../components/certificates/CertificateTemplate';
-import { useAuthStore } from '../../store/useAuthStore';
 import api from '../../lib/axios';
+import { useAuthStore } from '../../store/useAuthStore';
+import { CertificateTemplate, buildCertificateSvg } from '../../components/certificates/CertificateTemplate';
+import { FileText, Image as ImageIcon, ShieldCheck, ChevronDown, GraduationCap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 type ProfileCourse = {
   courseId: number;
@@ -40,37 +40,6 @@ function toCertificateData(course: ProfileCourse, studentName: string): Certific
     instructor_name: course.instructorName,
     admin_name: 'SarriaTech Admin',
   };
-}
-
-function buildPrintHtml(svg: string) {
-  const src = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-  return `<!doctype html>
-  <html lang="es">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>Certificado SarriaTech</title>
-      <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #050505; }
-        body { display: grid; place-items: center; overflow: hidden; }
-        img { width: 100vw; height: 100vh; object-fit: contain; display: block; }
-        @page { size: letter landscape; margin: 0; }
-        @media print {
-          html, body { width: 279.4mm; height: 215.9mm; }
-          img { width: 279.4mm; height: 215.9mm; }
-        }
-      </style>
-      <script>
-        window.addEventListener('load', () => {
-          const waitForFonts = document.fonts?.ready ? document.fonts.ready : Promise.resolve();
-          waitForFonts.finally(() => setTimeout(() => window.print(), 150));
-        });
-      </script>
-    </head>
-    <body>
-      <img src="${src}" alt="Certificado SarriaTech" />
-    </body>
-  </html>`;
 }
 
 async function svgToPng(svg: string, width = 2480, height = 2010) {
@@ -150,29 +119,38 @@ export function Certificates() {
     return toCertificateData(selectedCourse, profile.profile.name || user?.name || 'Estudiante');
   }, [profile, selectedCourse, user?.name]);
 
-  const previewData: CertificateData =
-    certificateData || {
-      student_name: profile?.profile.name || 'Estudiante',
-      course_name: 'Curso de demostración',
-      course_description: 'Vista previa del certificado de SarriaTech.',
-      completion_date: new Date().toLocaleDateString('es-CO'),
-      course_duration: '30 horas',
-      course_level: 'Aprobado',
-      certificate_id: 'ST-0000-0000',
-      verification_url: 'https://sarriatech.com',
-      instructor_name: 'SarriaTech Instructor',
-      admin_name: 'SarriaTech Admin',
-    };
+  const previewData = certificateData || {
+    student_name: profile?.profile.name || user?.name || 'Estudiante',
+    course_name: 'Curso de demostración',
+    course_description: 'Vista previa del certificado de SarriaTech.',
+    completion_date: new Date().toLocaleDateString('es-CO'),
+    course_duration: '30 horas',
+    course_level: 'Aprobado',
+    certificate_id: 'ST-DEMO-0000',
+    verification_url: 'https://sarriatech.com/certificados/ST-DEMO-0000',
+    instructor_name: 'Instructor Demostración',
+    admin_name: 'SarriaTech Admin',
+  };
+
 
   const handlePrintCertificate = () => {
     if (!courseCompleted) return;
-    const html = buildPrintHtml(buildCertificateSvg(previewData));
+    const printable = document.getElementById('printable-certificate');
+    if (!printable) return;
     const win = window.open('', '_blank', 'noopener,noreferrer,width=1600,height=1100');
     if (!win) return;
+    const html = `<!doctype html><html lang="es"><head><title>Imprimir certificado</title><style>html,body{margin:0;padding:0;width:100%;height:100%;background:#050505;display:flex;align-items:center;justify-content:center;} img{max-width:100%;height:auto;}</style></head><body>${printable.innerHTML}</body></html>`;
     win.document.open();
     win.document.write(html);
     win.document.close();
     win.focus();
+    // Wait for image to load before printing
+    const img = win.document.querySelector('img');
+    if (img) {
+      img.onload = () => win.print();
+    } else {
+      win.print();
+    }
   };
 
   const handleDownloadImage = async () => {
@@ -287,7 +265,7 @@ export function Certificates() {
         </div>
 
         <div className="space-y-4">
-          <div className="overflow-hidden rounded-[24px] bg-[#050505] p-2 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:rounded-[32px] sm:p-4">
+          <div id="printable-certificate" className="overflow-hidden rounded-[24px] bg-[#050505] p-2 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:rounded-[32px] sm:p-4">
             <div className="mx-auto flex w-full justify-center">
               <div className="w-full max-w-[1120px]">
                 {courseCompleted ? (

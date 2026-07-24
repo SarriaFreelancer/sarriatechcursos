@@ -48,7 +48,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }, []);
 
   return (
-    <header className="h-14 sm:h-16 bg-card border-b border-border flex items-center justify-between px-3 sm:px-6 shrink-0 relative z-30">
+    <header className="sticky top-0 h-14 sm:h-16 bg-card border-b border-border flex items-center justify-between px-3 sm:px-6 shrink-0 z-40">
       {/* Left side: hamburger + search */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
         <button
@@ -106,10 +106,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary cursor-pointer hover:bg-primary/20 transition-colors flex-shrink-0"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary cursor-pointer hover:bg-primary/20 transition-colors flex-shrink-0 overflow-hidden"
             aria-label="Menú de usuario"
           >
-            <UserIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            {user?.profilePicture ? (
+              <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <UserIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            )}
           </button>
 
           {dropdownOpen && (

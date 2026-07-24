@@ -196,11 +196,11 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
 
     // Calculate stats
     const totalCourses = user.enrollments.length;
-    const certificatesCount = user.certificates.length;
 
     let completedCoursesCount = 0;
     let totalProgressSum = 0;
     let completedLessonsCount = 0;
+    // certificatesCount will be set after processing enrollments
 
     const processedEnrollments = [];
     for (const enrollment of user.enrollments) {
@@ -255,7 +255,7 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         courseDuration: formatDuration(totalDurationSeconds),
       });
     }
-
+const certificatesCount = completedCoursesCount; // número de certificados basado en cursos completados al 100%
     const averageProgress = totalCourses > 0 ? Math.round(totalProgressSum / totalCourses) : 0;
     const studyHours = Math.round(completedLessonsCount * 0.4 * 10) / 10;
 
@@ -264,6 +264,10 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
         id: user.id,
         name: user.name,
         email: user.email,
+        profilePicture: user.profilePicture,
+        theme: user.theme,
+        emailNotifications: user.emailNotifications,
+        isPrivate: user.isPrivate,
         createdAt: user.createdAt,
         roleName: user.role.name,
         lastAccess: user.updatedAt,
@@ -327,31 +331,42 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
   }
 });
 
-// PUT /api/auth/profile - Update user name and email
+// PUT /api/auth/profile - Update user profile and settings
 router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const { name, email } = req.body;
-
-    if (!name || !email) {
-      return res.status(400).json({ error: 'El nombre y el correo electrónico son requeridos.' });
-    }
+    const { name, email, profilePicture, theme, emailNotifications, isPrivate } = req.body;
 
     // Check if email already exists for another user
-    const existing = await prisma.user.findFirst({
-      where: {
-        email,
-        id: { not: userId }
-      }
-    });
+    if (email) {
+      const existing = await prisma.user.findFirst({
+        where: {
+          email,
+          id: { not: userId }
+        }
+      });
 
-    if (existing) {
-      return res.status(400).json({ error: 'El correo electrónico ya está registrado por otro usuario.' });
+      if (existing) {
+        return res.status(400).json({ error: 'El correo electrónico ya está registrado por otro usuario.' });
+      }
+    }
+
+    // Build data object with only defined fields
+    const dataToUpdate: any = {};
+    if (name !== undefined) dataToUpdate.name = name;
+    if (email !== undefined) dataToUpdate.email = email;
+    if (profilePicture !== undefined) dataToUpdate.profilePicture = profilePicture;
+    if (theme !== undefined) dataToUpdate.theme = theme;
+    if (emailNotifications !== undefined) dataToUpdate.emailNotifications = emailNotifications;
+    if (isPrivate !== undefined) dataToUpdate.isPrivate = isPrivate;
+
+    if (Object.keys(dataToUpdate).length === 0) {
+       return res.status(400).json({ error: 'No data provided to update' });
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { name, email },
+      data: dataToUpdate,
       include: { role: true }
     });
 
@@ -359,6 +374,10 @@ router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) =
       id: updatedUser.id,
       name: updatedUser.name,
       email: updatedUser.email,
+      profilePicture: updatedUser.profilePicture,
+      theme: updatedUser.theme,
+      emailNotifications: updatedUser.emailNotifications,
+      isPrivate: updatedUser.isPrivate,
       roleId: updatedUser.roleId,
       roleName: updatedUser.role.name
     });

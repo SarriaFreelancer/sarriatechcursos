@@ -12,7 +12,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     const comments = await prisma.comment.findMany({
       where: { lessonId },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, profilePicture: true } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -62,7 +62,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
         parentId: parentCommentId,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true, profilePicture: true } },
       },
     });
 
